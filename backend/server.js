@@ -543,6 +543,7 @@ app.post('/api/puzzles/results', authenticateToken, (req, res) => {
           already_solved: true
         });
       }
+      else{
 
       // Insert puzzle result
       db.run(
@@ -598,6 +599,7 @@ app.post('/api/puzzles/results', authenticateToken, (req, res) => {
           });
         }
       );
+    };
     }
   );
 });
