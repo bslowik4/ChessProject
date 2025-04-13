@@ -252,7 +252,7 @@ app.post('/api/users/login', (req, res) => {
               const hoursLeft = Math.ceil((nextAvailable - now) / (1000 * 60 * 60));
 
               return res.status(403).json({
-                error: 'You cannot login yet. Please wait 23 hours between sessions.',
+                error: 'You cannot login yet. Please wait 24 hourss between sessions.',
                 next_available_at: lastSession.next_available_at,
                 hours_left: hoursLeft
               });
@@ -415,7 +415,7 @@ app.post('/api/sessions/start', authenticateToken, (req, res) => {
               const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
 
               return res.status(403).json({
-                error: 'Session not available yet. Please wait 23 hours.',
+                error: 'Session not available yet. Please wait 24 hourss.',
                 next_available_at: nextAvailableTime.toISOString(),
                 hours_left: hoursLeft
               });
@@ -472,7 +472,7 @@ app.post('/api/sessions/:sessionLogId/complete', authenticateToken, (req, res) =
         return res.status(400).json({ error: 'Session already completed' });
       }
 
-      // Calculate next available time (23 hours from now)
+      // Calculate next available time (24 hourss from now)
       const now = new Date();
       const nextAvailable = new Date(now);
       nextAvailable.setHours(nextAvailable.getHours() + 23);

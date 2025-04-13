@@ -497,14 +497,14 @@ function App() {
                 <li>Make your moves by dragging the pieces</li>
                 <li>White pieces are at the bottom, black at the top (unless otherwise specified)</li>
                 <li>The timer shows how much time you have left for the current puzzle</li>
-                <li>You need to complete {MAX_SESSIONS} sessions in total, with at least 23 hours between sessions</li>
+                <li>You need to complete {MAX_SESSIONS} sessions in total, with at least 24 hourss between sessions</li>
               </ul>
             </div>
 
             {userInfo.currentSession > 1 && lastSessionTime && !canStartNextSession() ? (
               <div className={styles.waitMessage}>
                 <h3>Please wait before starting the next session</h3>
-                <p>You need to wait at least 23 hours between sessions.</p>
+                <p>You need to wait at least 24 hourss between sessions.</p>
                 <p>Time remaining: approximately {waitTimeLeft} hour{waitTimeLeft !== 1 ? 's' : ''}</p>
               </div>
             ) : (

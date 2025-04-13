@@ -445,6 +445,7 @@ button:focus {
 }
 
 .controls {
+  
   margin: var(--spacing-md) 0;
   display: flex;
   justify-content: center;
@@ -465,6 +466,7 @@ button:focus {
   box-shadow: var(--shadow);
   width: 100%;
   box-sizing: border-box;
+  border-left: 4px solid var(--primary-color);
 }
 
 /* Compact button style for sidebar panel */
@@ -956,6 +958,7 @@ button:focus {
   color: var(--text-primary);
   position: relative;
   overflow: hidden;
+  border-left: 4px solid var(--primary-color);
 }
 
 /* Subtle chess notation background for timer */
