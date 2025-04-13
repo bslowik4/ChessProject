@@ -57,7 +57,7 @@ const PuzzleStatus = ({
             <>
               Correct! Reviewing solution...
               {!showModalWrapper && timer > 0 && (
-                <span className={styles.timer}> (Next Puzzle In {timer}s)</span>
+                <span className={styles.timer}> {/* (Next Puzzle In {timer}s) */}</span>
               )}
               {showButton && (
                 <button
@@ -80,7 +80,7 @@ const PuzzleStatus = ({
             <>
               Incorrect. Review the solution...
               {!showModalWrapper && timer > 0 && (
-                <span className={styles.timer}> (Next puzzle in {timer}s)</span>
+                <span className={styles.timer}> {/* (Next puzzle in {timer}s) */}</span>
               )}
               {showButton && (
                 <button
