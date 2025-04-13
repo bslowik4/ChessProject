@@ -802,6 +802,15 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
               </div>
             </div>
           )}
+          <PuzzleControls
+            isSolved={isSolved}
+            isFailed={isFailed}
+            showSolution={showSolution}
+            onPrevMove={handlePrevMove}
+            onNextMove={handleNextMove}
+            currentMoveIndex={replayIndex}
+            totalMoves={currentPuzzle?.moves?.length || 0}
+          />
         </div>
       </div>
 
@@ -812,16 +821,6 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         isFailed={isFailed}
         showSolution={showSolution}
         solutionTimer={solutionTimer}
-      />
-
-      <PuzzleControls
-        isSolved={isSolved}
-        isFailed={isFailed}
-        showSolution={showSolution}
-        onPrevMove={handlePrevMove}
-        onNextMove={handleNextMove}
-        currentMoveIndex={replayIndex}
-        totalMoves={currentPuzzle?.moves?.length || 0}
       />
 
       <PuzzleProgress
