@@ -252,7 +252,7 @@ app.post('/api/users/login', (req, res) => {
               const hoursLeft = Math.ceil((nextAvailable - now) / (1000 * 60 * 60));
 
               return res.status(403).json({
-                error: 'You cannot login yet. Please wait 24 hourss between sessions.',
+                error: 'You cannot login yet. Please wait 24 hours between sessions.',
                 next_available_at: lastSession.next_available_at,
                 hours_left: hoursLeft
               });
@@ -475,7 +475,7 @@ app.post('/api/sessions/:sessionLogId/complete', authenticateToken, (req, res) =
       // Calculate next available time (24 hourss from now)
       const now = new Date();
       const nextAvailable = new Date(now);
-      nextAvailable.setHours(nextAvailable.getHours() + 23);
+      nextAvailable.setHours(nextAvailable.getHours() + 24);
 
       // Update session log
       db.run(
@@ -526,66 +526,82 @@ app.post('/api/puzzles/results', authenticateToken, (req, res) => {
     move_times
   } = req.body;
 
-  // Insert puzzle result
-  db.run(
-    `INSERT INTO puzzle_results
-     (user_id, exercise_id, session_id, is_solved, attempts, correct_moves, incorrect_moves, time_spent_seconds)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [userId, exercise_id, session_id, is_solved ? 1 : 0, attempts, correct_moves, incorrect_moves, time_spent_seconds],
-    function (err) {
+  // Check if this user has already completed this puzzle in the session
+  db.get(
+    `SELECT 1 FROM puzzle_results
+     WHERE user_id = ? AND exercise_id = ? AND session_id = ?`,
+    [userId, exercise_id, session_id],
+    (err, existing) => {
       if (err) {
-        console.error('Error recording puzzle result:', err.message);
-        return res.status(500).json({ error: 'Server error recording puzzle result' });
+        console.error('Error checking for existing puzzle result:', err.message);
+        return res.status(500).json({ error: 'Server error checking puzzle result' });
       }
 
-      const resultId = this.lastID;
-      console.log(`Puzzle result recorded for user ${userId}, exercise ${exercise_id}, solved: ${is_solved}`);
-
-      // If move_times array is provided, save individual move times
-      if (move_times && Array.isArray(move_times) && move_times.length > 0) {
-        let insertCount = 0;
-        const totalMoves = move_times.length;
-
-        move_times.forEach((moveData, index) => {
-          db.run(
-            `INSERT INTO puzzle_move_times
-             (puzzle_result_id, move_number, move_uci, is_correct, time_spent_ms)
-             VALUES (?, ?, ?, ?, ?)`,
-            [resultId, index + 1, moveData.uci, moveData.isCorrect ? 1 : 0, moveData.timeSpentMs],
-            (err) => {
-              if (err) {
-                console.error('Error recording move time:', err.message);
-              } else {
-                insertCount++;
-                console.log(`Recorded move time ${insertCount}/${totalMoves} for puzzle result ${resultId}`);
-              }
-            }
-          );
+      if (existing) {
+        return res.status(200).json({
+          message: 'Puzzle already solved, skipping to next.',
+          already_solved: true
         });
       }
 
-      // Update session log to increment puzzles completed/solved
+      // Insert puzzle result
       db.run(
-        `UPDATE session_logs
-         SET puzzles_completed = puzzles_completed + 1,
-             puzzles_solved = puzzles_solved + ${is_solved ? 1 : 0}
-         WHERE user_id = ? AND session_id = ? AND completed = 0`,
-        [userId, session_id],
-        (err) => {
+        `INSERT INTO puzzle_results
+         (user_id, exercise_id, session_id, is_solved, attempts, correct_moves, incorrect_moves, time_spent_seconds)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, exercise_id, session_id, is_solved ? 1 : 0, attempts, correct_moves, incorrect_moves, time_spent_seconds],
+        function (err) {
           if (err) {
-            console.error('Error updating session log counters:', err.message);
-            // Still return success for the puzzle result
+            console.error('Error recording puzzle result:', err.message);
+            return res.status(500).json({ error: 'Server error recording puzzle result' });
           }
+
+          const resultId = this.lastID;
+          console.log(`Puzzle result recorded for user ${userId}, exercise ${exercise_id}, solved: ${is_solved}`);
+
+          // Save move times if provided
+          if (move_times && Array.isArray(move_times) && move_times.length > 0) {
+            move_times.forEach((moveData, index) => {
+              db.run(
+                `INSERT INTO puzzle_move_times
+                 (puzzle_result_id, move_number, move_uci, is_correct, time_spent_ms)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [resultId, index + 1, moveData.uci, moveData.isCorrect ? 1 : 0, moveData.timeSpentMs],
+                (err) => {
+                  if (err) {
+                    console.error('Error recording move time:', err.message);
+                  }
+                }
+              );
+            });
+          }
+
+          // Update session log stats
+          db.run(
+            `UPDATE session_logs
+             SET puzzles_completed = puzzles_completed + 1,
+                 puzzles_solved = puzzles_solved + ${is_solved ? 1 : 0}
+             WHERE user_id = ? AND session_id = ? AND completed = 0`,
+            [userId, session_id],
+            (err) => {
+              if (err) {
+                console.error('Error updating session log counters:', err.message);
+                // Don't block the response if this fails
+              }
+            }
+          );
+
+          res.status(201).json({
+            message: 'Puzzle result recorded successfully',
+            result_id: resultId,
+            already_solved: false
+          });
         }
       );
-
-      res.status(201).json({
-        message: 'Puzzle result recorded successfully',
-        result_id: resultId
-      });
     }
   );
 });
+
 
 // Get user's puzzle history
 app.get('/api/users/puzzle-history', authenticateToken, (req, res) => {

@@ -22,7 +22,7 @@ import {
 import { recordPuzzleResult, completeSessionLog } from '../../api/database';
 
 const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-const SOLUTION_DISPLAY_TIME = 47; // 45 seconds to view solution
+const SOLUTION_DISPLAY_TIME = 64; // 64 seconds to view solution
 
 function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, sessionId, sessionLogId, initialPuzzleIndex = 0 }) {
   // State declarations
@@ -792,7 +792,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
                 </svg>
               </div>
             </div>
-            
+
             <PuzzleControls
               isSolved={isSolved}
               isFailed={isFailed}

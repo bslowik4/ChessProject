@@ -192,3 +192,13 @@ export const getSessionHistory = async () => {
     throw error;
   }
 };
+
+export async function checkIfPuzzleSolved(userId, exerciseId, sessionId) {
+  const response = await fetch(`/api/check-puzzle-result?userId=${userId}&exerciseId=${exerciseId}&sessionId=${sessionId}`);
+  if (!response.ok) {
+    console.error('Failed to check puzzle result');
+    return false;
+  }
+  const result = await response.json();
+  return result.already_solved;
+}
