@@ -10,42 +10,41 @@ const PuzzleStatus = ({
 }) => {
   const [showModalWrapper, setShowModalWrapper] = useState(false);
   const [showButton, setShowButton] = useState(false);
-  const [timer, setTimer] = useState(0);
+  const [buttonTimer, setButtonTimer] = useState(0);
 
   useEffect(() => {
     let initialTimeoutId;
-    let countdownIntervalId;
     let buttonTimeoutId;
+    let buttonIntervalId;
 
     if (isSolved || isFailed) {
-      setShowModalWrapper(true); 
-      setTimer(4);
+      setShowModalWrapper(true);
 
       initialTimeoutId = setTimeout(() => {
         setShowModalWrapper(false);
-        setTimer(60); 
 
-        countdownIntervalId = setInterval(() => {
-          setTimer((prevTimer) => (prevTimer > 0 ? prevTimer - 1 : 0));
+        setButtonTimer(60);
+        buttonIntervalId = setInterval(() => {
+          setButtonTimer((prevTimer) => (prevTimer > 0 ? prevTimer - 1 : 0));
         }, 1000);
 
         buttonTimeoutId = setTimeout(() => {
-          setShowButton(true); 
-          setShowModalWrapper(true); 
-          clearInterval(countdownIntervalId); 
-          setTimer(0); 
-        }, 60000); 
+          setShowButton(true);
+          setShowModalWrapper(true);
+          clearInterval(buttonIntervalId);
+          setButtonTimer(0);
+        }, 60000);
       }, 4000);
 
       return () => {
         clearTimeout(initialTimeoutId);
-        clearInterval(countdownIntervalId);
         clearTimeout(buttonTimeoutId);
+        clearInterval(buttonIntervalId);
       };
     } else {
       setShowModalWrapper(false);
       setShowButton(false);
-      setTimer(0);
+      setButtonTimer(0);
     }
   }, [isSolved, isFailed]);
 
@@ -56,16 +55,13 @@ const PuzzleStatus = ({
           {showSolution ? (
             <>
               Correct! Reviewing solution...
-              {!showModalWrapper && timer > 0 && (
-                <span className={styles.timer}> {/* (Next Puzzle In {timer}s) */}</span>
-              )}
               {showButton && (
                 <button
                   className={styles.nextPuzzleButton}
                   onClick={handleNextPuzzle}
-                  disabled={solutionTimer > 0}
+                  disabled={solutionTimer > 0 || buttonTimer > 0}
                 >
-                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : 'Next puzzle'}
+                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : (buttonTimer > 0 ? `Next puzzle in ${buttonTimer}s` : 'Next puzzle')}
                 </button>
               )}
             </>
@@ -79,16 +75,13 @@ const PuzzleStatus = ({
           {showSolution ? (
             <>
               Incorrect. Review the solution...
-              {!showModalWrapper && timer > 0 && (
-                <span className={styles.timer}> {/* (Next puzzle in {timer}s) */}</span>
-              )}
               {showButton && (
                 <button
                   className={styles.nextPuzzleButton}
                   onClick={handleNextPuzzle}
-                  disabled={solutionTimer > 0}
+                  disabled={solutionTimer > 0 || buttonTimer > 0}
                 >
-                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : 'Next puzzle'}
+                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : (buttonTimer > 0 ? `Next puzzle in ${buttonTimer}s` : 'Next puzzle')}
                 </button>
               )}
             </>

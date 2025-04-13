@@ -17,7 +17,7 @@ const PuzzleControls = ({
       if (event.key === "ArrowRight" && currentMoveIndex < totalMoves) {
         onNextMove();
       } else if (event.key === "ArrowLeft" && currentMoveIndex > 0) {
-        onPrevMove(); // You'll need to define this
+        onPrevMove();
       }
     };
   
