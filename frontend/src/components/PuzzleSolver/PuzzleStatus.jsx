@@ -3,22 +3,49 @@ import styles from './PuzzleSolver.module.css';
 
 const PuzzleStatus = ({
   handleNextPuzzle,
-  errorMessage,
-  animateError,
   isSolved,
   isFailed,
   showSolution,
   solutionTimer
 }) => {
   const [showModalWrapper, setShowModalWrapper] = useState(false);
+  const [showButton, setShowButton] = useState(false);
+  const [timer, setTimer] = useState(0);
 
   useEffect(() => {
+    let initialTimeoutId;
+    let countdownIntervalId;
+    let buttonTimeoutId;
+
     if (isSolved || isFailed) {
-      setShowModalWrapper(true);
-      const timer = setTimeout(() => {
+      setShowModalWrapper(true); 
+      setTimer(4);
+
+      initialTimeoutId = setTimeout(() => {
         setShowModalWrapper(false);
-      }, 2000); // 2 seconds
-      return () => clearTimeout(timer);
+        setTimer(60); 
+
+        countdownIntervalId = setInterval(() => {
+          setTimer((prevTimer) => (prevTimer > 0 ? prevTimer - 1 : 0));
+        }, 1000);
+
+        buttonTimeoutId = setTimeout(() => {
+          setShowButton(true); 
+          setShowModalWrapper(true); 
+          clearInterval(countdownIntervalId); 
+          setTimer(0); 
+        }, 60000); 
+      }, 4000);
+
+      return () => {
+        clearTimeout(initialTimeoutId);
+        clearInterval(countdownIntervalId);
+        clearTimeout(buttonTimeoutId);
+      };
+    } else {
+      setShowModalWrapper(false);
+      setShowButton(false);
+      setTimer(0);
     }
   }, [isSolved, isFailed]);
 
@@ -29,13 +56,18 @@ const PuzzleStatus = ({
           {showSolution ? (
             <>
               Correct! Reviewing solution...
-              <button
-                className={styles.nextPuzzleButton}
-                onClick={handleNextPuzzle}      
-                disabled={solutionTimer > 0}
-              >
-                {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : 'Next puzzle'}
-              </button>
+              {!showModalWrapper && timer > 0 && (
+                <span className={styles.timer}> (Next Puzzle In {timer}s)</span>
+              )}
+              {showButton && (
+                <button
+                  className={styles.nextPuzzleButton}
+                  onClick={handleNextPuzzle}
+                  disabled={solutionTimer > 0}
+                >
+                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : 'Next puzzle'}
+                </button>
+              )}
             </>
           ) : (
             "Correct! Loading next puzzle..."
@@ -47,13 +79,18 @@ const PuzzleStatus = ({
           {showSolution ? (
             <>
               Incorrect. Review the solution...
-              <button
-                className={styles.nextPuzzleButton}
-                onClick={handleNextPuzzle}
-                disabled={solutionTimer > 0}
-              >
-                {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : 'Next puzzle'}
-              </button>
+              {!showModalWrapper && timer > 0 && (
+                <span className={styles.timer}> (Next puzzle in {timer}s)</span>
+              )}
+              {showButton && (
+                <button
+                  className={styles.nextPuzzleButton}
+                  onClick={handleNextPuzzle}
+                  disabled={solutionTimer > 0}
+                >
+                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : 'Next puzzle'}
+                </button>
+              )}
             </>
           ) : (
             "Incorrect. The correct solution will be shown."
@@ -62,17 +99,17 @@ const PuzzleStatus = ({
       )}
     </>
   );
+
   return (
     <>
-      {showModalWrapper ? (
+      {showModalWrapper && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             {statusMessage}
           </div>
         </div>
-      ) : (
-        statusMessage // still render the message but outside the modal after 2s
       )}
+      {!showModalWrapper && statusMessage}
     </>
   );
 };

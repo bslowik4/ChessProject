@@ -203,7 +203,7 @@ const Login = ({ onLoginSuccess }) => {
                             required
                         />
                         <div /* onClick={() => setShowConsentText(!showConsentText)} */>
-                            I agree to participate in the study and give consent. <span className={styles.expandIcon}>{showConsentText ? '▲' : '▼'}</span>
+                            I agree to participate in the study and give consent. <span className={styles.expandIcon}>{showConsentText /* ? '▲' : '▼' */}</span>
                         </div>
                         {showConsentText && (
                             <div className={styles.consentText}>
