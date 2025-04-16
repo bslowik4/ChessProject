@@ -64,7 +64,7 @@ const PuzzleStatus = ({
         <div className={`${styles.statusMessage} ${styles.success}`}>
           {showSolution && showInitialMessage ? (
             <>
-              Correct! Reviewing solution...
+              Correct!
               {showButton && (
                 <button
                   className={styles.nextPuzzleButton}
