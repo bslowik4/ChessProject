@@ -10,43 +10,51 @@ const PuzzleStatus = ({
 }) => {
   const [showModalWrapper, setShowModalWrapper] = useState(false);
   const [showButton, setShowButton] = useState(false);
-  const [buttonTimer, setButtonTimer] = useState(0);
 
   useEffect(() => {
     let initialTimeoutId;
-    let buttonTimeoutId;
-    let buttonIntervalId;
 
-    if (isSolved || isFailed) {
-      setShowModalWrapper(true);
-
-      initialTimeoutId = setTimeout(() => {
-        setShowModalWrapper(false);
-
-        setButtonTimer(60);
-        buttonIntervalId = setInterval(() => {
-          setButtonTimer((prevTimer) => (prevTimer > 0 ? prevTimer - 1 : 0));
-        }, 1000);
-
-        buttonTimeoutId = setTimeout(() => {
-          setShowButton(true);
-          setShowModalWrapper(true);
-          clearInterval(buttonIntervalId);
-          setButtonTimer(0);
-        }, 60000);
-      }, 4000);
-
-      return () => {
-        clearTimeout(initialTimeoutId);
-        clearTimeout(buttonTimeoutId);
-        clearInterval(buttonIntervalId);
-      };
-    } else {
+    // Reset states when puzzle status changes
+    if (!isSolved && !isFailed) {
       setShowModalWrapper(false);
       setShowButton(false);
-      setButtonTimer(0);
+      return;
     }
+
+    // Handle failed puzzles - show modal, then hide, then show button
+    if (isFailed) {
+      // Show modal immediately for 4 seconds
+      setShowModalWrapper(true);
+      
+      initialTimeoutId = setTimeout(() => {
+        // Hide modal after 4 seconds
+        setShowModalWrapper(false);
+        
+        // The button will be shown when the solution timer is finished
+        // This is handled by the solutionTimer logic below
+      }, 4000);
+    }
+    
+    // Handle solved puzzles - only show button without initial modal hide/show
+    if (isSolved) {
+      setShowModalWrapper(true);
+      setShowButton(true);
+    }
+
+    return () => {
+      clearTimeout(initialTimeoutId);
+    };
   }, [isSolved, isFailed]);
+
+  // Handle showing button when solution timer is near completion
+  useEffect(() => {
+    // For failed puzzles, when the solution timer is done (or nearly done),
+    // show the button and modal again
+    if (isFailed && solutionTimer === 0 && !showButton) {
+      setShowButton(true);
+      setShowModalWrapper(true);
+    }
+  }, [solutionTimer, isFailed, showButton]);
 
   const statusMessage = (
     <>
@@ -59,9 +67,9 @@ const PuzzleStatus = ({
                 <button
                   className={styles.nextPuzzleButton}
                   onClick={handleNextPuzzle}
-                  disabled={solutionTimer > 0 || buttonTimer > 0}
+                  disabled={solutionTimer > 0}
                 >
-                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : (buttonTimer > 0 ? `Next puzzle in ${buttonTimer}s` : 'Next puzzle')}
+                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : 'Next puzzle'}
                 </button>
               )}
             </>
@@ -79,9 +87,9 @@ const PuzzleStatus = ({
                 <button
                   className={styles.nextPuzzleButton}
                   onClick={handleNextPuzzle}
-                  disabled={solutionTimer > 0 || buttonTimer > 0}
+                  disabled={solutionTimer > 0}
                 >
-                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : (buttonTimer > 0 ? `Next puzzle in ${buttonTimer}s` : 'Next puzzle')}
+                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : 'Next puzzle'}
                 </button>
               )}
             </>
