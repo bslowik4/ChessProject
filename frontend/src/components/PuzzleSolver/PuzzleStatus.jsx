@@ -10,6 +10,7 @@ const PuzzleStatus = ({
 }) => {
   const [showModalWrapper, setShowModalWrapper] = useState(false);
   const [showButton, setShowButton] = useState(false);
+  const [showInitialMessage, setShowInitialMessage] = useState(true);
 
   useEffect(() => {
     let initialTimeoutId;
@@ -18,6 +19,7 @@ const PuzzleStatus = ({
     if (!isSolved && !isFailed) {
       setShowModalWrapper(false);
       setShowButton(false);
+      setShowInitialMessage(true);
       return;
     }
 
@@ -25,13 +27,11 @@ const PuzzleStatus = ({
     if (isFailed) {
       // Show modal immediately for 4 seconds
       setShowModalWrapper(true);
+      setShowInitialMessage(true);
       
       initialTimeoutId = setTimeout(() => {
         // Hide modal after 4 seconds
         setShowModalWrapper(false);
-        
-        // The button will be shown when the solution timer is finished
-        // This is handled by the solutionTimer logic below
       }, 4000);
     }
     
@@ -39,6 +39,7 @@ const PuzzleStatus = ({
     if (isSolved) {
       setShowModalWrapper(true);
       setShowButton(true);
+      setShowInitialMessage(true);
     }
 
     return () => {
@@ -48,11 +49,12 @@ const PuzzleStatus = ({
 
   // Handle showing button when solution timer is near completion
   useEffect(() => {
-    // For failed puzzles, when the solution timer is done (or nearly done),
-    // show the button and modal again
+    // For failed puzzles, when the solution timer is done,
+    // show the button-only modal
     if (isFailed && solutionTimer === 0 && !showButton) {
       setShowButton(true);
       setShowModalWrapper(true);
+      setShowInitialMessage(false); // Don't show text in the second modal appearance
     }
   }, [solutionTimer, isFailed, showButton]);
 
@@ -60,7 +62,7 @@ const PuzzleStatus = ({
     <>
       {isSolved && (
         <div className={`${styles.statusMessage} ${styles.success}`}>
-          {showSolution ? (
+          {showSolution && showInitialMessage ? (
             <>
               Correct! Reviewing solution...
               {showButton && (
@@ -74,13 +76,23 @@ const PuzzleStatus = ({
               )}
             </>
           ) : (
-            "Correct! Loading next puzzle..."
+            <>
+              {showInitialMessage ? "Correct! Loading next puzzle..." : ""}
+              {showButton && (
+                <button
+                  className={styles.nextPuzzleButton}
+                  onClick={handleNextPuzzle}
+                >
+                  Next puzzle
+                </button>
+              )}
+            </>
           )}
         </div>
       )}
       {isFailed && (
         <div className={`${styles.statusMessage} ${styles.failure}`}>
-          {showSolution ? (
+          {showSolution && showInitialMessage ? (
             <>
               Incorrect. Review the solution...
               {showButton && (
@@ -94,7 +106,17 @@ const PuzzleStatus = ({
               )}
             </>
           ) : (
-            "Incorrect. The correct solution will be shown."
+            <>
+              {showInitialMessage ? "Incorrect. The correct solution will be shown." : ""}
+              {showButton && !showInitialMessage && (
+                <button
+                  className={styles.nextPuzzleButton}
+                  onClick={handleNextPuzzle}
+                >
+                  Next puzzle
+                </button>
+              )}
+            </>
           )}
         </div>
       )}
