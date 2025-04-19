@@ -286,7 +286,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
                   setShowSolution(true);
                   setReplayIndex(0);
                   // Start a timer to show the solution for 5 seconds before moving to next puzzle
-                  setSolutionTimer(5);
+                  setSolutionTimer(SOLUTION_DISPLAY_TIME - 4);
 
                   // Update progress with new completion count
                   updateProgress(currentIndex);
@@ -312,7 +312,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
           setShowSolution(true);
           setReplayIndex(0);
           // Start a timer to show the solution for 5 seconds before moving to next puzzle //correct solution
-          setSolutionTimer(5);
+          setSolutionTimer(SOLUTION_DISPLAY_TIME - 4);
 
           // Update progress with new completion count
           updateProgress(currentIndex);

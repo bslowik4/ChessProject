@@ -24,7 +24,7 @@ const PuzzleStatus = ({
     }
 
     // Handle failed puzzles - show modal, then hide, then show button
-    if (isFailed) {
+    if (isFailed || isSolved) {
       // Show modal immediately for 4 seconds
       setShowModalWrapper(true);
       setShowInitialMessage(true);
@@ -36,11 +36,11 @@ const PuzzleStatus = ({
     }
     
     // Handle solved puzzles - only show button without initial modal hide/show
-    if (isSolved) {
+   /* if (isSolved) {
       setShowModalWrapper(true);
       setShowButton(true);
       setShowInitialMessage(true);
-    }
+    } */
 
     return () => {
       clearTimeout(initialTimeoutId);
@@ -51,7 +51,7 @@ const PuzzleStatus = ({
   useEffect(() => {
     // For failed puzzles, when the solution timer is done,
     // show the button-only modal
-    if (isFailed && solutionTimer === 0 && !showButton) {
+    if ((isFailed || isSolved) && solutionTimer === 0 && !showButton) {
       setShowButton(true);
       setShowModalWrapper(true);
       setShowInitialMessage(false); // Don't show text in the second modal appearance
