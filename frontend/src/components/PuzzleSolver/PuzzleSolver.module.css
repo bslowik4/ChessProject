@@ -461,12 +461,14 @@ button:focus {
   gap: 8px;
   padding: 8px;
   border-radius: var(--radius-md);
-  background: var(--surface-secondary);
+  background: linear-gradient(to right, var(--primary-color), rgb(31, 31, 244));
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow);
   width: 100%;
   box-sizing: border-box;
-  border-left: 4px solid var(--primary-color);
+  border-left: 4px solid var(--text-primary);
+  border-right: 4px solid var(--text-primary);
 }
 
 /* Compact button style for sidebar panel */
@@ -1046,6 +1048,7 @@ button:focus {
   justify-content: center;
   align-items: center;
   padding-right: 2.5rem;
+  font-size: 2rem;
 }
 
 

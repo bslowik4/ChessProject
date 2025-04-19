@@ -311,7 +311,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
           setShowSolutionAfterSuccess(true);
           setShowSolution(true);
           setReplayIndex(0);
-          // Start a timer to show the solution for 5 seconds before moving to next puzzle
+          // Start a timer to show the solution for 5 seconds before moving to next puzzle //correct solution
           setSolutionTimer(5);
 
           // Update progress with new completion count
@@ -774,13 +774,6 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
           )}
 
           <div className={styles.puzzleDetails}>
-            <div className={styles.header}>
-              <div className={styles.puzzleInfo}>
-                <h2>
-                  Puzzle {currentIndex + 1} of {exercises.length}
-                </h2>
-              </div>
-            </div>
             <div className={styles.startingColor}>
               <strong>Starting color</strong>
               <span className={styles.colorText}>{currentPuzzle?.starting_color === 'black' ? 'Black' : 'White'}</span>
@@ -812,6 +805,13 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
               </div>
             </div>
           )}
+          <div className={styles.header}>
+              <div className={styles.puzzleInfo}>
+                <h2>
+                  Puzzle {attemptedExercises !== undefined ? attemptedExercises : completedExercises} of {exercises.length}
+                </h2>
+              </div>
+            </div>
         </div>
       </div>
 
