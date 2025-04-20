@@ -21,6 +21,7 @@ function App() {
     groupId: null,
     currentSession: null
   });
+  const [headerMenu, setHeadermenu] = useState(true);
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
@@ -34,6 +35,10 @@ function App() {
     currentPuzzleIndex: 0
   });
   const [sessionStartTime, setSessionStartTime] = useState(null);
+
+  const toggleMenu = () => {
+    setHeadermenu(!headerMenu);
+  };
 
   // Restore user session from localStorage on initial load
   useEffect(() => {
@@ -574,13 +579,17 @@ function App() {
       </div>
     );
   }
+  
 
   // Render the PuzzleSolver with the loaded exercises
   return (
     <div className={styles.appWrapper}>
       {renderLogoutModal(getSessionInfo())}
       <div className={styles.appContainer}>
-        <div className={styles.headerBar}>
+        {/* <button onClick={toggleMenu}>Toggle Menu</button> */}
+        {headerMenu && (
+        <div className={styles.headerBar} style={{ position: 'relative' }}> 
+          <>
           <div className={styles.userProfile}>
             <div className={styles.profileIcon}>{getUserInitials()}</div>
             <div className={styles.userInfo}>
@@ -592,8 +601,9 @@ function App() {
             <ThemeToggle />
             <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>
           </div>
+          </>
         </div>
-
+        )}
         <div className={styles.puzzleSolverContainer}>
           <PuzzleSolver
             exercises={exercises}
