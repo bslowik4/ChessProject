@@ -749,7 +749,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
   return (
     <div className={styles.PuzzleSolver}>
-      <PuzzleHeader currentPuzzle={currentPuzzle} />
+      <PuzzleHeader currentPuzzle={currentPuzzle} isSolved={isSolved} isFailed={isFailed} />
       <div className={styles.boardContainer}>
         <PuzzleBoard
           game={game}
