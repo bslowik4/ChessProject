@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const sqlite3 = require('sqlite3').verbose();
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;  
 
 // Initialize Express app
 const app = express();
@@ -177,38 +179,46 @@ app.post('/api/users/register', (req, res) => {
       const userCount = result.count;
       const assignedGroup = (userCount % 4) + 1; // Groups 1-4
 
-      // Insert new user
-      db.run(
-        'INSERT INTO users (username, password, group_id, current_session) VALUES (?, ?, ?, ?)',
-        [username, password, assignedGroup, 1],
-        function (err) {
-          if (err) {
-            console.error('Error inserting user:', err.message);
-            return res.status(500).json({ error: 'Server error during registration' });
-          }
-
-          const userId = this.lastID;
-
-          // Generate token
-          const token = jwt.sign(
-            { id: userId, username, group_id: assignedGroup },
-            JWT_SECRET,
-            { expiresIn: '24h' }
-          );
-
-          // Log registration
-          console.log(`User registered: ${username}, Group: ${assignedGroup}, Session: 1`);
-
-          res.status(201).json({
-            message: 'User registered successfully',
-            user_id: userId,
-            username,
-            group_id: assignedGroup,
-            current_session: 1,
-            access_token: token
-          });
+      // Hash password
+      bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
+        if (err) {
+          console.error('Error hashing password:', err.message);
+          return res.status(500).json({ error: 'Server error during registration' });
         }
-      );
+
+        // Insert new user with hashed password
+        db.run(
+          'INSERT INTO users (username, password, group_id, current_session) VALUES (?, ?, ?, ?)',
+          [username, hashedPassword, assignedGroup, 1],
+          function (err) {
+            if (err) {
+              console.error('Error inserting user:', err.message);
+              return res.status(500).json({ error: 'Server error during registration' });
+            }
+
+            const userId = this.lastID;
+
+            // Generate token
+            const token = jwt.sign(
+              { id: userId, username, group_id: assignedGroup },
+              JWT_SECRET,
+              { expiresIn: '24h' }
+            );
+
+            // Log registration
+            console.log(`User registered: ${username}, Group: ${assignedGroup}, Session: 1`);
+
+            res.status(201).json({
+              message: 'User registered successfully',
+              user_id: userId,
+              username,
+              group_id: assignedGroup,
+              current_session: 1,
+              access_token: token
+            });
+          }
+        );
+      });
     });
   });
 });
@@ -219,8 +229,8 @@ app.post('/api/users/login', (req, res) => {
 
   // Find user
   db.get(
-    'SELECT id, group_id, current_session FROM users WHERE username = ? AND password = ?',
-    [username, password],
+    'SELECT id, username, password, group_id, current_session FROM users WHERE username = ?',
+    [username],
     (err, user) => {
       if (err) {
         console.error('Error finding user:', err.message);
@@ -231,62 +241,74 @@ app.post('/api/users/login', (req, res) => {
         return res.status(401).json({ error: 'Invalid username or password' });
       }
 
-      // Check if there's a completed session and if 24 hours have passed
-      db.get(
-        'SELECT * FROM session_logs WHERE user_id = ? AND completed = 1 ORDER BY end_time DESC LIMIT 1',
-        [user.id],
-        (err, lastSession) => {
-          if (err) {
-            console.error('Error checking last session:', err.message);
-            return res.status(500).json({ error: 'Server error checking session availability' });
-          }
-
-          const now = new Date();
-
-          // Only check time restriction if the user has completed a session before
-          if (lastSession && lastSession.next_available_at) {
-            const nextAvailable = new Date(lastSession.next_available_at);
-
-            if (now < nextAvailable) {
-              // Calculate hours left
-              const hoursLeft = Math.ceil((nextAvailable - now) / (1000 * 60 * 60));
-
-              return res.status(403).json({
-                error: 'You cannot login yet. Please wait 24 hours between sessions.',
-                next_available_at: lastSession.next_available_at,
-                hours_left: hoursLeft
-              });
-            }
-          }
-
-          // If we get here, the user can login
-          // Generate token
-          const token = jwt.sign(
-            { id: user.id, username, group_id: user.group_id },
-            JWT_SECRET,
-            { expiresIn: '24h' }
-          );
-
-          // Log login
-          console.log(`User logged in: ${username}, Group: ${user.group_id}, Session: ${user.current_session}`);
-
-          // Add next_available_at to the response if it exists
-          const loginResponse = {
-            message: 'Login successful',
-            user_id: user.id,
-            username,
-            group_id: user.group_id,
-            current_session: user.current_session,
-            access_token: token
-          };
-
-          if (lastSession && lastSession.next_available_at) {
-            loginResponse.next_available_at = lastSession.next_available_at;
-          }
-
-          res.status(200).json(loginResponse);
+      // Compare password with hash
+      bcrypt.compare(password, user.password, (err, isMatch) => {
+        if (err) {
+          console.error('Error comparing passwords:', err.message);
+          return res.status(500).json({ error: 'Server error during login' });
         }
-      );
+
+        if (!isMatch) {
+          return res.status(401).json({ error: 'Invalid username or password' });
+        }
+
+        // Check if there's a completed session and if 24 hours have passed
+        db.get(
+          'SELECT * FROM session_logs WHERE user_id = ? AND completed = 1 ORDER BY end_time DESC LIMIT 1',
+          [user.id],
+          (err, lastSession) => {
+            if (err) {
+              console.error('Error checking last session:', err.message);
+              return res.status(500).json({ error: 'Server error checking session availability' });
+            }
+
+            const now = new Date();
+
+            // Only check time restriction if the user has completed a session before
+            if (lastSession && lastSession.next_available_at) {
+              const nextAvailable = new Date(lastSession.next_available_at);
+
+              if (now < nextAvailable) {
+                // Calculate hours left
+                const hoursLeft = Math.ceil((nextAvailable - now) / (1000 * 60 * 60));
+
+                return res.status(403).json({
+                  error: 'You cannot login yet. Please wait 24 hours between sessions.',
+                  next_available_at: lastSession.next_available_at,
+                  hours_left: hoursLeft
+                });
+              }
+            }
+
+            // If we get here, the user can login
+            // Generate token
+            const token = jwt.sign(
+              { id: user.id, username: user.username, group_id: user.group_id },
+              JWT_SECRET,
+              { expiresIn: '24h' }
+            );
+
+            // Log login
+            console.log(`User logged in: ${user.username}, Group: ${user.group_id}, Session: ${user.current_session}`);
+
+            // Add next_available_at to the response if it exists
+            const loginResponse = {
+              message: 'Login successful',
+              user_id: user.id,
+              username: user.username,
+              group_id: user.group_id,
+              current_session: user.current_session,
+              access_token: token
+            };
+
+            if (lastSession && lastSession.next_available_at) {
+              loginResponse.next_available_at = lastSession.next_available_at;
+            }
+
+            res.status(200).json(loginResponse);
+          }
+        );
+      });
     }
   );
 });
