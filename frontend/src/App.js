@@ -486,24 +486,22 @@ function App() {
           <div className={styles.instructions}>
             <h2>Instructions</h2>
             <div className={`${styles.instructionsContent} dark-mode-card`}>
-              <p>In this study, you will solve a series of chess puzzles. Each puzzle has a specific solution that you need to find.</p>
-              <p>You will have 2 minutes to solve each puzzle. If you can't solve it within the time limit, the solution will be shown to you.</p>
-              <p>Try to solve as many puzzles as you can correctly. Your progress will be saved between sessions.</p>
-              <p>This research aims to understand how different chess training methods affect puzzle-solving abilities.</p>
-
+              <ul>
+              <li>The training program consists of 5 learning sessions, during which you will solve chess puzzles.</li>
+              <li>After completing each session, you must wait <b>24 hours</b> before starting the next one. You will receive a reminder via email when it is time for your next session. </li>
+              <li>During each session, try to solve as many puzzles correctly as possible. </li>
+              <li>Every exercise has only <b>one correct</b> solution.</li>
+              <li>You have 2 minutes to solve each puzzle – in that time you will need to make between one and three moves. </li>
+              <li>You have only <b>one</b> attempt to solve the puzzle, so think carefully before making a move. </li>
+              <li>You will receive feedback with the correct solution. You can review it by clicking the arrows next to the chessboard. You will have 45 seconds to study the correct moves – use this time to memorize the solution. </li>
+              </ul>
               {isLastSession && (
                 <div className={styles.finalSessionNote}>
                   <p><strong>Note:</strong> This is your final session in the study. Thank you for your participation!</p>
                 </div>
               )}
+              <strong>After completing 5 training sessions, you will be asked via email to participate in the final test. </strong>
 
-              <p>Remember:</p>
-              <ul>
-                <li>Make your moves by dragging the pieces</li>
-                <li>White pieces are at the bottom, black at the top (unless otherwise specified)</li>
-                <li>The timer shows how much time you have left for the current puzzle</li>
-                <li>You need to complete {MAX_SESSIONS} sessions in total, with at least 24 hourss between sessions</li>
-              </ul>
             </div>
 
             {userInfo.currentSession > 1 && lastSessionTime && !canStartNextSession() ? (
