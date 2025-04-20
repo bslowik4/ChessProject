@@ -20,8 +20,7 @@ const Login = ({ onLoginSuccess }) => {
     const [hasReadInfo, setHasReadInfo] = useState(false);
     const [checkboxAccepted, setCheckboxAccepted] = useState(false);
 
-
-
+    
     const handleSwitchToRegister = () => {
         setIsRegistering(true);
         setError('');
@@ -38,41 +37,38 @@ const Login = ({ onLoginSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-
+    
+        // Email format regex
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+        // Check consent if registering
         if (isRegistering && !consentAccepted) {
             setError('You must read and accept the research information first');
             return;
         }
-
-
+    
+        // Validate email (username)
+        if (!emailRegex.test(username)) {
+            setError('Please enter a valid email address.');
+            return;
+        }
+    
         setLoading(true);
         setError('');
         setNextAvailableTime(null);
         setHoursLeft(0);
-
-
+    
         try {
             if (isRegistering) {
-                // Register new user with direct database connection
                 const userData = await registerUserInDb(username, password);
-
-
-                // Store user data in localStorage
                 localStorage.setItem('access_token', userData.access_token);
                 localStorage.setItem('user_id', userData.user_id);
                 localStorage.setItem('username', userData.username);
                 localStorage.setItem('group_id', userData.group_id);
                 localStorage.setItem('current_session', userData.current_session);
-
-
-                // Log the registration
                 console.log(`User registered: ${username}, Group: ${userData.group_id}, Session: ${userData.current_session}`);
-
-
                 onLoginSuccess();
             } else {
-                // Login logic
                 try {
                     const userData = await loginUserFromDb(username, password);
                     localStorage.setItem('access_token', userData.access_token);
@@ -110,6 +106,7 @@ const Login = ({ onLoginSuccess }) => {
             setLoading(false);
         }
     };
+    
 
 
     const formatNextAvailable = () => {
