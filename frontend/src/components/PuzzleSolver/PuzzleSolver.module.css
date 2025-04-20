@@ -461,7 +461,8 @@ button:focus {
   gap: 8px;
   padding: 8px;
   border-radius: var(--radius-md);
-  background: linear-gradient(to right, var(--primary-color), rgb(31, 31, 244));
+  /* background: linear-gradient(to right, var(--primary-color), rgb(31, 31, 244)); */
+  background-image: var(--primary-gradient);
   box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow);

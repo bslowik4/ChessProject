@@ -6,7 +6,8 @@ const PuzzleStatus = ({
   isSolved,
   isFailed,
   showSolution,
-  solutionTimer
+  solutionTimer,
+  currentPuzzle
 }) => {
   const [showModalWrapper, setShowModalWrapper] = useState(false);
   const [showButton, setShowButton] = useState(false);
@@ -64,7 +65,7 @@ const PuzzleStatus = ({
         <div className={`${styles.statusMessage} ${styles.success}`}>
           {showSolution && showInitialMessage ? (
             <>
-              Correct!
+              {`Correct ${currentPuzzle.motives}!`}
               {showButton && (
                 <button
                   className={styles.nextPuzzleButton}
@@ -94,7 +95,7 @@ const PuzzleStatus = ({
         <div className={`${styles.statusMessage} ${styles.failure}`}>
           {showSolution && showInitialMessage ? (
             <>
-              Incorrect. Review the solution...
+              {`Incorrect motive ${currentPuzzle.motives}. Review the solution... `}
               {showButton && (
                 <button
                   className={styles.nextPuzzleButton}

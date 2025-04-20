@@ -822,6 +822,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         isFailed={isFailed}
         showSolution={showSolution}
         solutionTimer={solutionTimer}
+        currentPuzzle={currentPuzzle}
       />
 
       <PuzzleProgress
