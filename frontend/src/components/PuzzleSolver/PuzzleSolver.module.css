@@ -1073,3 +1073,22 @@ button:focus {
   margin-left: 0.5em;
   font-size: 1.5rem;
 }
+
+.correctFeedback{
+  color:black;
+  padding: 0.2em;
+  margin: 0.2em;
+  border-radius: var(--radius-md);
+  background-color: #00FF33;
+  border: 1px solid #00FF33;
+  animation: fadeIn 0.5s ease;
+}
+.incorrectFeedback{
+  color: black;
+  padding: 0.2em;
+  margin: 0.2em;
+  border-radius: var(--radius-md);
+  background-color: rgb(255, 18, 18);
+  border: 1px solid rgba(229, 62, 62);
+  animation: fadeIn 0.5s ease;
+}

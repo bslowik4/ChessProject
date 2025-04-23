@@ -1,10 +1,11 @@
 import React from 'react';
 import styles from './PuzzleSolver.module.css';
 
-function PuzzleHeader({ currentPuzzle }) {
+function PuzzleHeader({ currentPuzzle, isSolved, isFailed }) {
   return (
     <>
       {currentPuzzle?.motives && (
+        <div className={styles.motiveBox}>
         <div className={styles.motives}>
           <strong>Motive</strong>
           <span className={styles.motiveText}>{currentPuzzle.motives}</span>
@@ -15,6 +16,13 @@ function PuzzleHeader({ currentPuzzle }) {
               <path d="M2 12l10 5 10-5"></path>
             </svg>
           </div>
+        </div>
+        {isSolved && (
+          <div className={styles.correctFeedback}><b>Correct!</b> Review the solution.</div>
+        )}
+        {isFailed && (
+          <div className={styles.incorrectFeedback}><b>Incorrect.</b> Review the solution.</div>
+        )}
         </div>
       )}</>);
 }
