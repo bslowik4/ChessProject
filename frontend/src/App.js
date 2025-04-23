@@ -488,7 +488,8 @@ function App() {
             <div className={`${styles.instructionsContent} dark-mode-card`}>
               <ul>
               <li>The training program consists of 5 learning sessions, during which you will solve chess puzzles.</li>
-              <li>After completing each session, you must wait <b>24 hours</b> before starting the next one. You will receive a reminder via email when it is time for your next session. </li>
+              <li>After completing each session, you must wait <b>24 hours</b> before starting the next one. You will receive a reminder via email when it is time for your next session.</li> 
+              <li>You will have 24 hours to complete the session. </li>
               <li>During each session, try to solve as many puzzles correctly as possible. </li>
               <li>Every exercise has only <b>one correct</b> solution.</li>
               <li>You have 2 minutes to solve each puzzle – in that time you will need to make between one and three moves. </li>

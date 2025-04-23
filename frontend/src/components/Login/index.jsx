@@ -170,7 +170,7 @@ const Login = ({ onLoginSuccess }) => {
                 <div className={styles.inputGroup}>
                     <input
                         type="text"
-                        placeholder="Username"
+                        placeholder="Email Address"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         disabled={loading || showResearchInfoModal}

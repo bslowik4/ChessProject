@@ -65,7 +65,7 @@ const PuzzleStatus = ({
         <div className={`${styles.statusMessage} ${styles.success}`}>
           {showSolution && showInitialMessage ? (
             <>
-              {`Correct ${currentPuzzle.motives}!`}
+              {`Correct!`}
               {showButton && (
                 <button
                   className={styles.nextPuzzleButton}
@@ -95,7 +95,7 @@ const PuzzleStatus = ({
         <div className={`${styles.statusMessage} ${styles.failure}`}>
           {showSolution && showInitialMessage ? (
             <>
-              {`Incorrect motive ${currentPuzzle.motives}. Review the solution... `}
+              {`Incorrect. Review the solution `}
               {showButton && (
                 <button
                   className={styles.nextPuzzleButton}

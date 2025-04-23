@@ -444,13 +444,17 @@ button:focus {
   100% { transform: translateX(0); }
 }
 
+.reviewInfo{
+  color: var(--text-primary);
+  font-size: 1.2em;
+}
+
 .controls {
-  
+  flex-direction: column;
   margin: var(--spacing-md) 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: var(--spacing-md);
 }
 
 /* Enhanced solution controls */

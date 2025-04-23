@@ -785,7 +785,6 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
                 </svg>
               </div>
             </div>
-
             <PuzzleControls
               isSolved={isSolved}
               isFailed={isFailed}

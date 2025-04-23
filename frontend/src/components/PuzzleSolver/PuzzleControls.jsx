@@ -31,6 +31,7 @@ const PuzzleControls = ({
 
   return (
     <div className={styles.controls}>
+      <div className={styles.reviewInfo}>Review the solution here</div>
       <div className={styles.solutionControls}>
         <button
           onClick={onPrevMove}

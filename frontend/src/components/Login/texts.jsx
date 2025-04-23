@@ -26,7 +26,7 @@ export const InformationText = () => {
             <h4>What will happen?</h4>
             <p>
                 Over the course of two weeks, you will participate in five learning sessions and complete a final test.
-                There must be at least one day between each session.
+                There must be at least one day break between each session.
                 After the final test, you will be asked to answer a few questions.
                 Each learning session and final test will take approximately 1 hour.
                 You will receive an email with a link to join the learning sessions;
