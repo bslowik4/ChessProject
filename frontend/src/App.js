@@ -486,22 +486,45 @@ function App() {
           <div className={styles.instructions}>
             <h2>Instructions</h2>
             <div className={`${styles.instructionsContent} dark-mode-card`}>
-              <ul>
-              <li>The training program consists of 5 learning sessions, during which you will solve chess puzzles.</li>
-              <li>After completing each session, you must wait <b>24 hours</b> before starting the next one. You will receive a reminder via email when it is time for your next session.</li> 
-              <li>You will have 24 hours to complete the session. </li>
-              <li>During each session, try to solve as many puzzles correctly as possible. </li>
-              <li>Every exercise has only <b>one correct</b> solution.</li>
-              <li>You have 2 minutes to solve each puzzle – in that time you will need to make between one and three moves. </li>
-              <li>You have only <b>one</b> attempt to solve the puzzle, so think carefully before making a move. </li>
-              <li>You will receive feedback with the correct solution. You can review it by clicking the arrows next to the chessboard. You will have 45 seconds to study the correct moves – use this time to memorize the solution. </li>
-              </ul>
+              <ol>
+                <li><span>The training program consists of </span><strong><span>5 learning sessions</span></strong><span>, during which you will solve chess puzzles.&nbsp;</span><span>&nbsp;</span></li>
+              </ol>
+              <ol>
+                <li><strong><span>A</span></strong><strong><span>fter completing each session, you must wait 24 hours before beginning the next one.</span></strong><span> Once it becomes </span><strong><span>available, you will have another 24 hours to complete it. </span></strong><span>You will receive a reminder via email when it is time for your next session.</span><span>&nbsp;</span></li>
+              </ol>
+              <ol>
+                <li><span>At the top of the page, there will be a countdown timer and the motive name of the current task.</span><span>&nbsp;</span></li>
+              </ol>
+              <ol>
+                <li><span>During each session, try to </span><strong><span>solve as many puzzles correctly as possible</span></strong><span>.</span><span>&nbsp;</span></li>
+              </ol>
+              <ol>
+                <li><span>Every exercise has </span><strong><span>only one correct solution</span></strong><span>.</span><span>&nbsp;</span></li>
+              </ol>
+              <ol>
+                <li><span>You have </span><strong><span>2 minutes to solve each puzzle</span></strong> <span>&ndash; in that time </span><strong><span>you will need to make </span></strong><strong><span>between one and three moves.</span></strong><span>&nbsp;</span></li>
+              </ol>
+              <ol>
+                <li><span>You have only </span><strong><span>one attempt to solve the puzzle</span></strong><span>, so think carefully before making a move.</span><span>&nbsp;</span></li>
+              </ol>
+              <ol>
+                <li><span>If you make a </span><strong><span>mistake</span></strong><span>, you will </span><strong><span>receive feedback</span></strong> <span>with the correct solution</span><strong><span>. You can review it by clicking the arrows next to the chessboard</span></strong><span>. You will </span><strong><span>have 45 seconds</span></strong> <span>to study the correct moves &ndash; use this time to memorize the solution.</span><span>&nbsp;</span></li>
+              </ol>
+              <ol>
+                <li><span>Each learning session can last up to 60 minutes &ndash; </span><strong><span>there are no scheduled breaks during the session</span></strong><span>. Please complete the session at one time.&nbsp;</span><span>&nbsp;</span></li>
+              </ol>
+              <ol>
+                <li><span>Once you start a session, you&rsquo;ll see at the top of the page which session you&rsquo;re currently working on</span><span>&nbsp;</span></li>
+              </ol>
+              <ol>
+                <li><span>For questions about the study, please contact the researchers at: </span><a href="mailto:chesspoject.research@gmail.com"><span><span>chesspoject.research@gmail.com</span></span></a><span>&nbsp;</span></li>
+              </ol>
+              <p><strong><span>After completing 5 training sessions, you will be asked via email to participate in the final test.</span></strong><span>&nbsp;</span></p>
               {isLastSession && (
                 <div className={styles.finalSessionNote}>
                   <p><strong>Note:</strong> This is your final session in the study. Thank you for your participation!</p>
                 </div>
               )}
-              <strong>After completing 5 training sessions, you will be asked via email to participate in the final test. </strong>
 
             </div>
 
@@ -578,7 +601,7 @@ function App() {
       </div>
     );
   }
-  
+
 
   // Render the PuzzleSolver with the loaded exercises
   return (
@@ -587,21 +610,21 @@ function App() {
       <div className={styles.appContainer}>
         {/* <button onClick={toggleMenu}>Toggle Menu</button> */}
         {headerMenu && (
-        <div className={styles.headerBar} style={{ position: 'relative' }}> 
-          <>
-          <div className={styles.userProfile}>
-            <div className={styles.profileIcon}>{getUserInitials()}</div>
-            <div className={styles.userInfo}>
-              <span>User: {userInfo.username} | Group: {userInfo.groupId} | Session: {userInfo.currentSession}/{MAX_SESSIONS}</span>
-            </div>
+          <div className={styles.headerBar} style={{ position: 'relative' }}>
+            <>
+              <div className={styles.userProfile}>
+                <div className={styles.profileIcon}>{getUserInitials()}</div>
+                <div className={styles.userInfo}>
+                  <span>User: {userInfo.username} | Group: {userInfo.groupId} | Session: {userInfo.currentSession}/{MAX_SESSIONS}</span>
+                </div>
+              </div>
+              <div className={styles.appTitle}>Chess Research Project</div>
+              <div className={styles.headerActions}>
+                <ThemeToggle />
+                <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>
+              </div>
+            </>
           </div>
-          <div className={styles.appTitle}>Chess Research Project</div>
-          <div className={styles.headerActions}>
-            <ThemeToggle />
-            <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>
-          </div>
-          </>
-        </div>
         )}
         <div className={styles.puzzleSolverContainer}>
           <PuzzleSolver
