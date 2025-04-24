@@ -425,12 +425,13 @@ app.post('/api/sessions/start', authenticateToken, (req, res) => {
             return res.status(500).json({ error: 'Server error checking last session' });
           }
 
-          const twentyThreeHoursInMillis = 23 * 60 * 60 * 1000; // Liczba milisekund w 23 godzinach
+          // const twentyFourHoursInMillis = 23 * 60 * 60 * 1000; // Liczba milisekund w 23 godzinach
+          const twentyFourHoursInMillis = 10;
           const now = new Date();
 
           if (lastSession && lastSession.created_at) {
             const lastSessionCreatedAt = new Date(lastSession.created_at);
-            const nextAvailableTime = new Date(lastSessionCreatedAt.getTime() + twentyThreeHoursInMillis);
+            const nextAvailableTime = new Date(lastSessionCreatedAt.getTime() + twentyFourHoursInMillis);
 
             if (now < nextAvailableTime) {
               const timeLeft = nextAvailableTime - now;
@@ -497,7 +498,8 @@ app.post('/api/sessions/:sessionLogId/complete', authenticateToken, (req, res) =
       // Calculate next available time (24 hourss from now)
       const now = new Date();
       const nextAvailable = new Date(now);
-      nextAvailable.setHours(nextAvailable.getHours() + 24);
+      //nextAvailable.setHours(nextAvailable.getHours() + 24);
+      nextAvailable.setHours(nextAvailable.getHours() + 0);
 
       // Update session log
       db.run(
