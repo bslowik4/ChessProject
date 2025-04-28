@@ -5,7 +5,7 @@ const sqlite3 = require('sqlite3').verbose();
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const bcrypt = require('bcrypt');
-const saltRounds = 10;  
+const saltRounds = 10;
 
 // Initialize Express app
 const app = express();
@@ -397,7 +397,24 @@ app.post('/api/sessions/start', authenticateToken, (req, res) => {
   const userId = req.user.id;
   const sessionId = req.body.session_id;
 
-  // Check if user has an ongoing session
+  db.get('SELECT current_session FROM users WHERE id = ?', [userId], (err, user) => {
+    if (err) {
+      console.error('Error fetching user:', err.message);
+      return res.status(500).json({ error: 'Server error' });
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.current_session > 5) {
+      return res.status(400).json({ error: 'All sessions completed. No more sessions available.' });
+    }
+
+    if (sessionId !== user.current_session) {
+      return res.status(403).json({ error: 'You are not allowed to start this session.' });
+    }
+    
   db.get(
     'SELECT * FROM session_logs WHERE user_id = ? AND completed = 0',
     [userId],
@@ -469,6 +486,7 @@ app.post('/api/sessions/start', authenticateToken, (req, res) => {
       );
     }
   );
+});
 });
 
 // Complete a session
@@ -567,63 +585,63 @@ app.post('/api/puzzles/results', authenticateToken, (req, res) => {
           already_solved: true
         });
       }
-      else{
+      else {
 
-      // Insert puzzle result
-      db.run(
-        `INSERT INTO puzzle_results
+        // Insert puzzle result
+        db.run(
+          `INSERT INTO puzzle_results
          (user_id, exercise_id, session_id, is_solved, attempts, correct_moves, incorrect_moves, time_spent_seconds)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, exercise_id, session_id, is_solved ? 1 : 0, attempts, correct_moves, incorrect_moves, time_spent_seconds],
-        function (err) {
-          if (err) {
-            console.error('Error recording puzzle result:', err.message);
-            return res.status(500).json({ error: 'Server error recording puzzle result' });
-          }
+          [userId, exercise_id, session_id, is_solved ? 1 : 0, attempts, correct_moves, incorrect_moves, time_spent_seconds],
+          function (err) {
+            if (err) {
+              console.error('Error recording puzzle result:', err.message);
+              return res.status(500).json({ error: 'Server error recording puzzle result' });
+            }
 
-          const resultId = this.lastID;
-          console.log(`Puzzle result recorded for user ${userId}, exercise ${exercise_id}, solved: ${is_solved}`);
+            const resultId = this.lastID;
+            console.log(`Puzzle result recorded for user ${userId}, exercise ${exercise_id}, solved: ${is_solved}`);
 
-          // Save move times if provided
-          if (move_times && Array.isArray(move_times) && move_times.length > 0) {
-            move_times.forEach((moveData, index) => {
-              db.run(
-                `INSERT INTO puzzle_move_times
+            // Save move times if provided
+            if (move_times && Array.isArray(move_times) && move_times.length > 0) {
+              move_times.forEach((moveData, index) => {
+                db.run(
+                  `INSERT INTO puzzle_move_times
                  (puzzle_result_id, move_number, move_uci, is_correct, time_spent_ms)
                  VALUES (?, ?, ?, ?, ?)`,
-                [resultId, index + 1, moveData.uci, moveData.isCorrect ? 1 : 0, moveData.timeSpentMs],
-                (err) => {
-                  if (err) {
-                    console.error('Error recording move time:', err.message);
+                  [resultId, index + 1, moveData.uci, moveData.isCorrect ? 1 : 0, moveData.timeSpentMs],
+                  (err) => {
+                    if (err) {
+                      console.error('Error recording move time:', err.message);
+                    }
                   }
-                }
-              );
-            });
-          }
+                );
+              });
+            }
 
-          // Update session log stats
-          db.run(
-            `UPDATE session_logs
+            // Update session log stats
+            db.run(
+              `UPDATE session_logs
              SET puzzles_completed = puzzles_completed + 1,
                  puzzles_solved = puzzles_solved + ${is_solved ? 1 : 0}
              WHERE user_id = ? AND session_id = ? AND completed = 0`,
-            [userId, session_id],
-            (err) => {
-              if (err) {
-                console.error('Error updating session log counters:', err.message);
-                // Don't block the response if this fails
+              [userId, session_id],
+              (err) => {
+                if (err) {
+                  console.error('Error updating session log counters:', err.message);
+                  // Don't block the response if this fails
+                }
               }
-            }
-          );
+            );
 
-          res.status(201).json({
-            message: 'Puzzle result recorded successfully',
-            result_id: resultId,
-            already_solved: false
-          });
-        }
-      );
-    };
+            res.status(201).json({
+              message: 'Puzzle result recorded successfully',
+              result_id: resultId,
+              already_solved: false
+            });
+          }
+        );
+      };
     }
   );
 });

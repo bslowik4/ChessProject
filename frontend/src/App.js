@@ -514,7 +514,7 @@ function App() {
                 <li><span>Each learning session can last up to 60 minutes &ndash; </span><strong><span>there are no scheduled breaks during the session</span></strong><span>. Please complete the session at one time.&nbsp;</span><span>&nbsp;</span></li>
               </ol>
               <ol>
-                <li><span>Once you start a session, you&rsquo;ll see at the top of the page which session you&rsquo;re currently working on</span><span>&nbsp;</span></li>
+                <li><span>At the top of the page, you can see the number of your current session.</span><span>&nbsp;</span></li>
               </ol>
               <ol>
                 <li><span>For questions about the study, please contact the researchers at: </span><a href="mailto:chesspoject.research@gmail.com"><span><span>chesspoject.research@gmail.com</span></span></a><span>&nbsp;</span></li>

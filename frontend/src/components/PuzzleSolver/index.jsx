@@ -805,12 +805,12 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
             </div>
           )}
           <div className={styles.header}>
-              <div className={styles.puzzleInfo}>
-                <h2>
-                  Puzzle {attemptedExercises !== undefined ? attemptedExercises : completedExercises} of {exercises.length}
-                </h2>
-              </div>
+            <div className={styles.puzzleInfo}>
+              <h2>
+                Puzzle {currentIndex + 1} of {exercises.length}
+              </h2>
             </div>
+          </div>
         </div>
       </div>
 
