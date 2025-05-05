@@ -313,11 +313,12 @@ app.post('/api/users/login', (req, res) => {
   );
 });
 
+
 // Update user session (requires auth)
 app.post('/api/users/:userId/next-session', authenticateToken, (req, res) => {
   const { userId } = req.params;
+  const { current_session } = req.body;
 
-  // Get current session
   db.get('SELECT current_session FROM users WHERE id = ?', [userId], (err, user) => {
     if (err) {
       console.error('Error finding user:', err.message);
@@ -326,6 +327,14 @@ app.post('/api/users/:userId/next-session', authenticateToken, (req, res) => {
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (current_session !== undefined && current_session !== user.current_session) {
+      console.error(`Session mismatch: Client reported ${current_session}, DB has ${user.current_session}`);
+      return res.status(400).json({ 
+        error: 'Session validation failed', 
+        current_session: user.current_session 
+      });
     }
 
     let newSession = user.current_session;
@@ -399,94 +408,100 @@ app.post('/api/sessions/start', authenticateToken, (req, res) => {
 
   db.get('SELECT current_session FROM users WHERE id = ?', [userId], (err, user) => {
     if (err) {
-      console.error('Error fetching user:', err.message);
-      return res.status(500).json({ error: 'Server error' });
+      console.error('Error finding user:', err.message);
+      return res.status(500).json({ error: 'Server error finding user' });
     }
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    if (user.current_session > 5) {
-      return res.status(400).json({ error: 'All sessions completed. No more sessions available.' });
-    }
 
     if (sessionId !== user.current_session) {
-      return res.status(403).json({ error: 'You are not allowed to start this session.' });
+      console.error(`Session mismatch: Client requested ${sessionId}, DB has ${user.current_session}`);
+      return res.status(400).json({ 
+        error: 'Invalid session ID',
+        current_session: user.current_session 
+      });
     }
-    
-  db.get(
-    'SELECT * FROM session_logs WHERE user_id = ? AND completed = 0',
-    [userId],
-    (err, activeSession) => {
-      if (err) {
-        console.error('Error checking active session:', err.message);
-        return res.status(500).json({ error: 'Server error checking session' });
-      }
 
-      if (activeSession) {
-        return res.status(200).json({
-          message: 'Session already in progress',
-          session_log_id: activeSession.id,
-          session_id: activeSession.session_id
-        });
-      }
 
-      // Check if there's a completed session and it's not 24 hours old yet
-      db.get(
-        'SELECT * FROM session_logs WHERE user_id = ? AND completed = 1 ORDER BY end_time DESC LIMIT 1',
-        [userId],
-        (err, lastSession) => {
-          if (err) {
-            console.error('Error checking last session:', err.message);
-            return res.status(500).json({ error: 'Server error checking last session' });
-          }
+    if (user.current_session > 5) {
+      return res.status(400).json({ 
+        error: 'Maximum number of sessions already completed'
+      });
+    }
 
-          // const twentyFourHoursInMillis = 23 * 60 * 60 * 1000; // Liczba milisekund w 23 godzinach
-          const twentyFourHoursInMillis = 10;
-          const now = new Date();
 
-          if (lastSession && lastSession.created_at) {
-            const lastSessionCreatedAt = new Date(lastSession.created_at);
-            const nextAvailableTime = new Date(lastSessionCreatedAt.getTime() + twentyFourHoursInMillis);
-
-            if (now < nextAvailableTime) {
-              const timeLeft = nextAvailableTime - now;
-              const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
-
-              return res.status(403).json({
-                error: 'Session not available yet. Please wait 24 hourss.',
-                next_available_at: nextAvailableTime.toISOString(),
-                hours_left: hoursLeft
-              });
-            }
-          }
-
-          // Create a new session log
-          db.run(
-            'INSERT INTO session_logs (user_id, session_id) VALUES (?, ?)',
-            [userId, sessionId],
-            function (err) {
-              if (err) {
-                console.error('Error creating session log:', err.message);
-                return res.status(500).json({ error: 'Server error creating session log' });
-              }
-
-              const sessionLogId = this.lastID;
-              console.log(`User ${userId} started session ${sessionId}, log ID: ${sessionLogId}`);
-
-              res.status(201).json({
-                message: 'Session started successfully',
-                session_log_id: sessionLogId,
-                session_id: sessionId
-              });
-            }
-          );
+    db.get(
+      'SELECT * FROM session_logs WHERE user_id = ? AND completed = 0',
+      [userId],
+      (err, activeSession) => {
+        if (err) {
+          console.error('Error checking active session:', err.message);
+          return res.status(500).json({ error: 'Server error checking session' });
         }
-      );
-    }
-  );
-});
+
+        if (activeSession) {
+          return res.status(200).json({
+            message: 'Session already in progress',
+            session_log_id: activeSession.id,
+            session_id: activeSession.session_id
+          });
+        }
+
+        db.get(
+          'SELECT * FROM session_logs WHERE user_id = ? AND completed = 1 ORDER BY end_time DESC LIMIT 1',
+          [userId],
+          (err, lastSession) => {
+            if (err) {
+              console.error('Error checking last session:', err.message);
+              return res.status(500).json({ error: 'Server error checking last session' });
+            }
+
+            const twentyFourHoursInMillis = 24 * 60 * 60 * 1000; 
+            const now = new Date();
+
+            if (lastSession && lastSession.created_at) {
+              const lastSessionCreatedAt = new Date(lastSession.created_at);
+              const nextAvailableTime = new Date(lastSessionCreatedAt.getTime() + twentyFourHoursInMillis);
+
+              if (now < nextAvailableTime) {
+                const timeLeft = nextAvailableTime - now;
+                const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
+
+                return res.status(403).json({
+                  error: 'Session not available yet. Please wait 24 hours.',
+                  next_available_at: nextAvailableTime.toISOString(),
+                  hours_left: hoursLeft
+                });
+              }
+            }
+
+            db.run(
+              'INSERT INTO session_logs (user_id, session_id) VALUES (?, ?)',
+              [userId, sessionId],
+              function (err) {
+                if (err) {
+                  console.error('Error creating session log:', err.message);
+                  return res.status(500).json({ error: 'Server error creating session log' });
+                }
+
+                const sessionLogId = this.lastID;
+                console.log(`User ${userId} started session ${sessionId}, log ID: ${sessionLogId}`);
+
+                res.status(201).json({
+                  message: 'Session started successfully',
+                  session_log_id: sessionLogId,
+                  session_id: sessionId
+                });
+              }
+            );
+          }
+        );
+      }
+    );
+  });
 });
 
 // Complete a session

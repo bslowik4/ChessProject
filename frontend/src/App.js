@@ -55,6 +55,7 @@ function App() {
     }
   }, [sessionActive, userInfo.groupId, userInfo.currentSession]);
 
+
   // Restore user session from localStorage
   const restoreUserSession = () => {
     const userId = localStorage.getItem('user_id');
@@ -65,30 +66,37 @@ function App() {
     const savedPuzzleIndex = localStorage.getItem('current_puzzle_index');
     const savedPuzzlesCompleted = localStorage.getItem('puzzles_completed');
 
+    let validatedSession = Number(currentSession);
+    if (isNaN(validatedSession) || validatedSession < 1) {
+      validatedSession = 1;
+      localStorage.setItem('current_session', '1');
+    } else if (validatedSession > MAX_SESSIONS) {
+      validatedSession = MAX_SESSIONS + 1;
+      localStorage.setItem('current_session', validatedSession.toString());
+    }
+
     setUserInfo({
       userId,
       username,
       groupId: Number(groupId),
-      currentSession: Number(currentSession)
+      currentSession: validatedSession
     });
 
     if (lastSessionCompleted) {
       setLastSessionTime(new Date(lastSessionCompleted));
     }
 
-    // Restore saved puzzle progress if available
     if (savedPuzzleIndex || savedPuzzlesCompleted) {
       setSessionProgress({
         puzzlesCompleted: savedPuzzlesCompleted ? Number(savedPuzzlesCompleted) : 0,
-        totalPuzzles: 0, // Will be updated when exercises are loaded
+        totalPuzzles: 0, 
         currentPuzzleIndex: savedPuzzleIndex ? Number(savedPuzzleIndex) : 0
       });
     }
 
-    // Check if there was an active session when the page was refreshed
     const wasSessionActive = localStorage.getItem('session_active') === 'true';
-    if (wasSessionActive) {
-      // Also restore the session log ID if available
+
+    if (wasSessionActive && validatedSession <= MAX_SESSIONS) {
       const savedSessionLogId = localStorage.getItem('session_log_id');
       if (savedSessionLogId) {
         setSessionLogId(savedSessionLogId);
@@ -96,19 +104,18 @@ function App() {
 
       setSessionActive(true);
       setShowInstructions(false);
-
-      // Restore session start time if available
       const savedStartTime = localStorage.getItem('session_start_time');
       if (savedStartTime) {
         setSessionStartTime(Number(savedStartTime));
       } else {
-        // If no saved start time, set to current time
         setSessionStartTime(Date.now());
       }
+    } else if (wasSessionActive && validatedSession > MAX_SESSIONS) {
+      localStorage.removeItem('session_active');
     }
 
     setIsLoggedIn(true);
-    console.log(`User session restored: ${username}, Group: ${groupId}, Session: ${currentSession}`);
+    console.log(`User session restored: ${username}, Group: ${groupId}, Session: ${validatedSession}`);
   }
 
   const loadExercisesForCurrentSession = async () => {
@@ -197,35 +204,38 @@ function App() {
 
   // Complete current session and advance to next
   const completeAndAdvanceSession = async () => {
-    // Calculate total time for the session
     const totalTimeSeconds = Math.floor((Date.now() - sessionStartTime) / 1000);
 
-    // Complete the current session
-    await completeSessionLog(
-      sessionLogId,
-      totalTimeSeconds,
-      sessionProgress.puzzlesCompleted,
-      Math.min(sessionProgress.puzzlesCompleted, sessionProgress.totalPuzzles)
-    );
+    try {
+      await completeSessionLog(
+        sessionLogId,
+        totalTimeSeconds,
+        sessionProgress.puzzlesCompleted,
+        Math.min(sessionProgress.puzzlesCompleted, sessionProgress.totalPuzzles)
+      );
 
-    // Advance to the next session
-    const newSession = await updateUserSession(userInfo.userId);
+      let newSession = userInfo.currentSession;
+      if (userInfo.currentSession < MAX_SESSIONS) {
+        newSession = await updateUserSession(userInfo.userId);
+      }
 
-    // Record session completion time
-    const now = new Date();
-    localStorage.setItem('last_session_time', now.toISOString());
-    localStorage.setItem('current_session', newSession);
+      const now = new Date();
+      localStorage.setItem('last_session_time', now.toISOString());
+      localStorage.setItem('current_session', newSession);
+      localStorage.removeItem('current_puzzle_index');
+      localStorage.removeItem('puzzles_completed');
+      localStorage.removeItem('session_active');
+      localStorage.removeItem('session_log_id');
+      localStorage.removeItem('session_start_time');
 
-    // Clear puzzle progress when completing a session
-    localStorage.removeItem('current_puzzle_index');
-    localStorage.removeItem('puzzles_completed');
-    localStorage.removeItem('session_active');
-    localStorage.removeItem('session_log_id');
-    localStorage.removeItem('session_start_time');
-
-    console.log(`Session completed during logout. Advanced to session ${newSession}`);
-    return newSession;
+      console.log(`Session completed during logout. Advanced to session ${newSession}`);
+      return newSession;
+    } catch (error) {
+      console.error('Error completing session:', error);
+      return userInfo.currentSession;
+    }
   }
+
 
   // Function to cancel logout
   const cancelLogout = () => {
@@ -244,21 +254,21 @@ function App() {
     setSessionProgress(progress);
 
     try {
-      const newSession = await updateUserSession(userInfo.userId);
+      let newSession = userInfo.currentSession;
 
-      // Record session completion time
+      if (userInfo.currentSession < MAX_SESSIONS) {
+        newSession = await updateUserSession(userInfo.userId);
+      }
+
       const now = new Date();
       localStorage.setItem('last_session_time', now.toISOString());
       setLastSessionTime(now);
 
-      // Update local state and localStorage
       setUserInfo(prev => ({
         ...prev,
         currentSession: newSession
       }));
       localStorage.setItem('current_session', newSession);
-
-      // Clear puzzle progress when completing a session
       localStorage.removeItem('current_puzzle_index');
       localStorage.removeItem('puzzles_completed');
       localStorage.removeItem('session_active');
@@ -267,11 +277,8 @@ function App() {
 
       console.log(`Session completed. Advanced to session ${newSession}`);
 
-      // End the current session
       setSessionActive(false);
-      // Show instructions for the next session
       setShowInstructions(true);
-      // Reset session progress for next session
       setSessionProgress({
         puzzlesCompleted: 0,
         totalPuzzles: 0,
@@ -279,8 +286,16 @@ function App() {
       });
     } catch (error) {
       console.error('Error updating session:', error);
+      setSessionActive(false);
+      setShowInstructions(true);
+      setSessionProgress({
+        puzzlesCompleted: 0,
+        totalPuzzles: 0,
+        currentPuzzleIndex: 0
+      });
     }
   };
+
 
   // Add handler to update progress during session
   const handleProgressUpdate = (progress) => {
@@ -298,30 +313,37 @@ function App() {
 
   const startSession = async () => {
     if (!userInfo.userId || !userInfo.currentSession) return;
-
+    
+    if (userInfo.currentSession > MAX_SESSIONS) {
+      console.log("All sessions completed, cannot start a new session");
+      return;
+    }
+  
     try {
       const sessionLog = await createSessionLog(userInfo.userId, userInfo.currentSession);
       setSessionLogId(sessionLog.session_log_id);
-
-      // Store session log ID in localStorage
+  
       localStorage.setItem('session_log_id', sessionLog.session_log_id);
-
+  
       const startTime = Date.now();
       setSessionStartTime(startTime);
-
-      // Store session start time and active state in localStorage
+  
       localStorage.setItem('session_start_time', startTime);
       localStorage.setItem('session_active', 'true');
-
+  
       setShowInstructions(false);
       setSessionActive(true);
     } catch (error) {
       console.error('Error creating session log:', error);
-      // Still allow the session to start even if logging fails
+      
+      if (error.response && error.response.data && error.response.data.error) {
+        alert(`Session error: ${error.response.data.error}`);
+        return;
+      }
+      
       setShowInstructions(false);
       setSessionActive(true);
-
-      // Store session state even if logging fails
+  
       localStorage.setItem('session_active', 'true');
       localStorage.setItem('session_start_time', Date.now());
     }

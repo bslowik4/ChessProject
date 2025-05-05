@@ -56,18 +56,25 @@ export const loginUserFromDb = async (username, password) => {
 
 export const updateUserSession = async (userId) => {
   try {
+    const currentSession = Number(localStorage.getItem('current_session'));
+    
     const response = await axios.post(
       `${API_URL}/users/${userId}/next-session`,
-      {},
+      { current_session: currentSession },
       getAuthConfig()
     );
 
     return response.data.current_session;
   } catch (error) {
     console.error('Error updating session:', error);
+    if (error.response && error.response.data && error.response.data.current_session) {
+      localStorage.setItem('current_session', error.response.data.current_session);
+      return error.response.data.current_session;
+    }
     throw error;
   }
 };
+
 
 export const getExercisesForSession = async (groupId, sessionId) => {
   try {
