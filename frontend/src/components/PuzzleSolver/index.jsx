@@ -22,7 +22,7 @@ import {
 import { recordPuzzleResult, completeSessionLog } from '../../api/database';
 
 const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-const SOLUTION_DISPLAY_TIME = 64; // 64 seconds to view solution
+const SOLUTION_DISPLAY_TIME = 10; // 64 seconds to view solution
 
 function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, sessionId, sessionLogId, initialPuzzleIndex = 0 }) {
   // State declarations
@@ -94,7 +94,6 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
       moves: moves,
       starting_color: starting_color
     });
-    setCurrentIndex(index);
 
     // Reset state for new puzzle
     setIsSolved(false);
@@ -134,26 +133,25 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
   };
 
   // Update the parent component with progress information
-  const updateProgress = (currentPuzzleIndex) => {
+  const updateProgress = (puzzleIndex) => {
     if (onProgressUpdate) {
       onProgressUpdate({
         puzzlesCompleted: completedExercises,
         totalPuzzles: exercises.length,
-        currentPuzzleIndex: currentPuzzleIndex,
+        currentPuzzleIndex: puzzleIndex,
         attemptedExercises: attemptedExercises
       });
     }
   };
 
-  // Function to move to the next puzzle
   const handleNextPuzzle = () => {
-    console.log("handeling the next puzzle")
+    console.log("handling the next puzzle");
     setSolutionTimer(0);
     const nextIndex = currentIndex + 1;
     if (nextIndex < exercises.length) {
+      setCurrentIndex(nextIndex);
       loadPuzzle(nextIndex);
     } else {
-      // All puzzles completed
       setSessionCompleted(true);
       if (onComplete) {
         onComplete({
@@ -503,6 +501,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
   // Load first puzzle when exercises are loaded, or start from remembered index
   useEffect(() => {
     if (exercises.length > 0 && !puzzleInitialized) {
+      setCurrentIndex(initialPuzzleIndex)
       loadPuzzle(initialPuzzleIndex);
       setPuzzleInitialized(true);
     }
@@ -645,6 +644,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
         // If the saved puzzle index is valid and within the exercises range
         if (puzzleData.index >= 0 && puzzleData.index < exercises.length) {
+          setCurrentIndex(puzzleData.index);
           // First load the puzzle normally
           if (puzzleData.index !== currentIndex) {
             loadPuzzle(puzzleData.index);
