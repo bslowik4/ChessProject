@@ -191,6 +191,7 @@ const Login = ({ onLoginSuccess }) => {
 
                 {isRegistering && hasReadInfo && (
                     <div className={styles.consentGroup}>
+                        <div style={{color:'red', fontSize:'1.2em'}}><b>Important Reminder: Please Save Your Password!</b></div>
                         <input
                             type="checkbox"
                             id="consent"

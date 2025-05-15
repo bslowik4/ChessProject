@@ -1,12 +1,11 @@
 import React from 'react';
 import styles from './PuzzleSolver.module.css';
 
-const PuzzleProgress = ({ completedExercises, totalExercises, attemptedExercises }) => {
+const PuzzleProgress = ({totalExercises, attemptedExercises }) => {
   // Use attemptedExercises for progress if provided, otherwise fall back to completedExercises
-  const progressCount = attemptedExercises !== undefined ? attemptedExercises : completedExercises;
 
   // Calculate percentage based on attempted puzzles
-  const progressPercentage = (progressCount / totalExercises) * 100;
+  const progressPercentage = (attemptedExercises / totalExercises) * 100;
 
   return (
     <div className={styles.progress}>

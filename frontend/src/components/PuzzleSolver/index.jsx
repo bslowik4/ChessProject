@@ -22,7 +22,7 @@ import {
 import { recordPuzzleResult, completeSessionLog } from '../../api/database';
 
 const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-const SOLUTION_DISPLAY_TIME = 10; // 64 seconds to view solution
+const SOLUTION_DISPLAY_TIME = 64; // 64 seconds to view solution
 
 function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, sessionId, sessionLogId, initialPuzzleIndex = 0 }) {
   // State declarations
@@ -147,6 +147,9 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
   const handleNextPuzzle = () => {
     console.log("handling the next puzzle");
     setSolutionTimer(0);
+    if (currentPuzzle?.id) {
+      localStorage.removeItem(`solution_end_${currentPuzzle.id}`);
+    }    
     const nextIndex = currentIndex + 1;
     if (nextIndex < exercises.length) {
       setCurrentIndex(nextIndex);
@@ -272,6 +275,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
                 // Check if puzzle is solved after computer's move
                 if (newMoveIndex >= currentPuzzle.moves.length) {
                   setIsSolved(true);
+                  localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'solved');
                   setCompletedExercises(prev => prev + 1);
 
                   // Count as attempted if not already counted
@@ -284,7 +288,10 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
                   setShowSolution(true);
                   setReplayIndex(0);
                   // Start a timer to show the solution for 5 seconds before moving to next puzzle
-                  setSolutionTimer(SOLUTION_DISPLAY_TIME - 4);
+                  const endTime = Date.now() + SOLUTION_DISPLAY_TIME * 1000;
+                  localStorage.setItem(`solution_end_${currentPuzzle?.id}`, endTime.toString());
+                  setSolutionTimer(SOLUTION_DISPLAY_TIME);
+
 
                   // Update progress with new completion count
                   updateProgress(currentIndex);
@@ -297,6 +304,8 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         } else {
           // Puzzle is solved if no more computer moves
           setIsSolved(true);
+          localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'solved');
+
           setCompletedExercises(prev => prev + 1);
 
           // Count as attempted if not already counted
@@ -310,7 +319,10 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
           setShowSolution(true);
           setReplayIndex(0);
           // Start a timer to show the solution for 5 seconds before moving to next puzzle //correct solution
-          setSolutionTimer(SOLUTION_DISPLAY_TIME - 4);
+          const endTime = Date.now() + SOLUTION_DISPLAY_TIME * 1000;
+          localStorage.setItem(`solution_end_${currentPuzzle?.id}`, endTime.toString());
+
+          setSolutionTimer(SOLUTION_DISPLAY_TIME);
 
           // Update progress with new completion count
           updateProgress(currentIndex);
@@ -320,6 +332,8 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         setTotalIncorrectMoves(prev => prev + 1);
         triggerErrorAnimation();
         setIsFailed(true);
+        localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'failed');
+
 
         // Store failed state in localStorage
         localStorage.setItem('current_puzzle_data', JSON.stringify({
@@ -344,6 +358,8 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         handleShowSolution();
 
         // Start solution timer (30 seconds)
+        const endTime = Date.now() + SOLUTION_DISPLAY_TIME * 1000;
+        localStorage.setItem(`solution_end_${currentPuzzle?.id}`, endTime.toString());
         setSolutionTimer(SOLUTION_DISPLAY_TIME);
 
         // Record the elapsed time when puzzle is failed
@@ -376,6 +392,8 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
     console.log('Time up for puzzle, showing solution...');
     setIsFailed(true);
+    localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'failed');
+
 
     // Record the elapsed time
     const timeSpent = Math.floor((Date.now() - puzzleStartTime) / 1000);
@@ -384,8 +402,9 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
     // Automatically show solution
     setShowSolution(true);
     setReplayIndex(0);
+    const endTime = Date.now() + SOLUTION_DISPLAY_TIME * 1000;
+    localStorage.setItem(`solution_end_${currentPuzzle?.id}`, endTime.toString());
     setSolutionTimer(SOLUTION_DISPLAY_TIME);
-
     // Count as attempted if not already
     if (!isFailed && !isSolved) {
       setAttemptedExercises(prev => prev + 1);
@@ -580,7 +599,9 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
   useEffect(() => {
     if (sessionCompleted) {
       completeSession();
-
+      if (currentPuzzle?.id) {
+        localStorage.removeItem(`solution_end_${currentPuzzle.id}`);
+      }
       // Clean up any timers
       const timerKey = `puzzle_timer_end_${window.location.pathname}-${120}`; // assuming 120 seconds is default
       localStorage.removeItem(timerKey);
@@ -651,13 +672,29 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
           }
 
           // Then restore the additional state
-          if (puzzleData.isSolved) {
-            setIsSolved(true);
+          const persistedStatus = localStorage.getItem(`puzzle-status-${puzzleData.puzzleId}`);
+          const solutionEnd = localStorage.getItem(`solution_end_${puzzleData.puzzleId}`);
+          let remaining = SOLUTION_DISPLAY_TIME;
+
+          if (solutionEnd) {
+            const timeLeft = Math.ceil((parseInt(solutionEnd, 10) - Date.now()) / 1000);
+            remaining = Math.max(4, timeLeft);
           }
 
-          if (puzzleData.isFailed) {
-            setIsFailed(true);
+          if (persistedStatus === 'solved') {
+            setIsSolved(true);
+            setShowSolutionAfterSuccess(true);
+            setShowSolution(true);
+            setReplayIndex(0);
+            setSolutionTimer(remaining);
           }
+          if (persistedStatus === 'failed') {
+            setIsFailed(true);
+            setShowSolution(true);
+            setReplayIndex(0);
+            setSolutionTimer(remaining);
+          }
+
 
           if (puzzleData.moveIndex > 0) {
             setMoveIndex(puzzleData.moveIndex);
@@ -825,9 +862,8 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
       />
 
       <PuzzleProgress
-        completedExercises={completedExercises}
         totalExercises={exercises.length}
-        attemptedExercises={attemptedExercises}
+        attemptedExercises={currentIndex + 1}
       />
     </div>
   );

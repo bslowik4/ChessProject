@@ -539,7 +539,7 @@ function App() {
                 <li><span>At the top of the page, you can see the number of your current session.</span><span>&nbsp;</span></li>
               </ol>
               <ol>
-                <li><span>For questions about the study, please contact the researchers at: </span><a href="mailto:chesspoject.research@gmail.com"><span><span>chesspoject.research@gmail.com</span></span></a><span>&nbsp;</span></li>
+                <li><span>For questions about the study, please contact the researchers at: </span><span><b><span>chesspoject.research@gmail.com</span></b> </span><span>&nbsp;</span></li>
               </ol>
               <p><strong><span>After completing 5 training sessions, you will be asked via email to participate in the final test.</span></strong><span>&nbsp;</span></p>
               {isLastSession && (
