@@ -298,23 +298,23 @@ app.post("/api/users/login", (req, res) => {
             const now = new Date();
 
             // Only check time restriction if the user has completed a session before
-            if (lastSession && lastSession.next_available_at) {
-              const nextAvailable = new Date(lastSession.next_available_at);
+            // if (lastSession && lastSession.next_available_at) {
+            //   const nextAvailable = new Date(lastSession.next_available_at);
 
-              if (now < nextAvailable) {
-                // Calculate hours left
-                const hoursLeft = Math.ceil(
-                  (nextAvailable - now) / (1000 * 60 * 60)
-                );
+            //   if (now < nextAvailable) {
+            //     // Calculate hours left
+            //     const hoursLeft = Math.ceil(
+            //       (nextAvailable - now) / (1000 * 60 * 60)
+            //     );
 
-                return res.status(403).json({
-                  error:
-                    "You cannot login yet. Please wait 24 hours between sessions.",
-                  next_available_at: lastSession.next_available_at,
-                  hours_left: hoursLeft,
-                });
-              }
-            }
+            //     return res.status(403).json({
+            //       error:
+            //         "You cannot login yet. Please wait 24 hours between sessions.",
+            //       next_available_at: lastSession.next_available_at,
+            //       hours_left: hoursLeft,
+            //     });
+            //   }
+            // }
 
             // If we get here, the user can login
             // Generate token
@@ -432,14 +432,30 @@ app.get(
       return res.status(400).json({ error: "Invalid group or session" });
     }
 
-    // Get exercises for the group and session
+    // Determine exercise range based on group and session
+    let startId, endId;
+    if (groupId == 1 || groupId == 2) {
+      startId = 1;
+      endId = 21;
+    } else if (groupId == 3 || groupId == 4) {
+      startId = (sessionId - 1) * 21 + 1;
+      endId = sessionId * 21;
+    }
+
+    // Fisher-Yates shuffle function for better randomization
+    const fisherYatesShuffle = (array) => {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    };
+
+    // Fetch exercises for the session
     db.all(
-      `SELECT e.* FROM exercises e
-     JOIN exercise_sessions es ON e.id = es.exercise_id
-     JOIN sessions s ON es.session_id = s.id
-     WHERE s.group_id = ? AND s.session_number = ?
-     ORDER BY es.order_in_session`,
-      [groupId, sessionId],
+      `SELECT * FROM exercises
+       WHERE id BETWEEN ? AND ?`,
+      [startId, endId],
       (err, exercises) => {
         if (err) {
           console.error("Error fetching exercises:", err.message);
@@ -448,12 +464,78 @@ app.get(
             .json({ error: "Server error fetching exercises" });
         }
 
+        // Group exercises by motive
+        const groupedExercises = { Undermining: [], Fork: [], Pin: [] };
+        exercises.forEach((exercise) => {
+          groupedExercises[exercise.motives].push(exercise);
+        });
+
+        let finalExercises = [];
+        if (groupId == 1 || groupId == 3) {
+          // Group 1 and 3: Randomize motives and keep exercises grouped
+          const motiveNames = Object.keys(groupedExercises);
+          const shuffledMotives = fisherYatesShuffle([...motiveNames]);
+
+          shuffledMotives.forEach((motive) => {
+            // Also shuffle exercises within each motive
+            const shuffledExercises = fisherYatesShuffle([...groupedExercises[motive]]);
+            finalExercises.push(...shuffledExercises);
+          });
+        } else if (groupId == 2 || groupId == 4) {
+          // Group 2 and 4: Create a more random distribution
+          const allExercises = [];
+
+          // Collect all exercises with their motives
+          Object.keys(groupedExercises).forEach(motive => {
+            groupedExercises[motive].forEach(exercise => {
+              allExercises.push({ exercise, motive });
+            });
+          });
+
+          // Shuffle all exercises first
+          const shuffledAll = fisherYatesShuffle([...allExercises]);
+
+          // Now distribute them ensuring no consecutive same motives
+          const result = [];
+          const remaining = [...shuffledAll];
+
+          while (remaining.length > 0) {
+            let placed = false;
+
+            // Try to find an exercise with different motive than the last one
+            for (let i = 0; i < remaining.length; i++) {
+              const lastMotive = result.length > 0 ? result[result.length - 1].motive : null;
+
+              if (remaining[i].motive !== lastMotive) {
+                result.push(remaining[i]);
+                remaining.splice(i, 1);
+                placed = true;
+                break;
+              }
+            }
+
+            // If we couldn't find a different motive, just take the first available
+            if (!placed && remaining.length > 0) {
+              result.push(remaining[0]);
+              remaining.splice(0, 1);
+            }
+          }
+
+          finalExercises = result.map(item => item.exercise);
+        }
+
+        if (finalExercises.length === 0) {
+          console.warn(`No exercises found`);
+          return res.status(404).json({ error: "No exercises found" });
+        }
+
+        console.log(finalExercises)
         // Log exercise fetch
         console.log(
-          `Fetched ${exercises.length} exercises for Group ${groupId}, Session ${sessionId}`
+          `Fetched ${finalExercises.length} exercises for Group ${groupId}, Session ${sessionId}`
         );
 
-        res.status(200).json(exercises);
+        res.status(200).json(finalExercises);
       }
     );
   }
@@ -531,26 +613,26 @@ app.post("/api/sessions/start", authenticateToken, (req, res) => {
                   .json({ error: "Server error checking last session" });
               }
 
-              const twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
-              const now = new Date();
+              // const twentyFourHoursInMillis = 10;
+              // const now = new Date();
 
-              if (lastSession && lastSession.end_time) {
-                const lastSessionEndTime = new Date(lastSession.end_time);
-                const nextAvailableTime = new Date(
-                  lastSessionEndTime.getTime() + twentyFourHoursInMillis
-                );
+              // if (lastSession && lastSession.end_time) {
+              //   const lastSessionEndTime = new Date(lastSession.end_time);
+              //   const nextAvailableTime = new Date(
+              //     lastSessionEndTime.getTime() + 10
+              //   );
 
-                if (now < nextAvailableTime) {
-                  const timeLeft = nextAvailableTime - now;
-                  const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
+              //   if (now < nextAvailableTime) {
+              //     const timeLeft = nextAvailableTime - now;
+              //     const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
 
-                  return res.status(403).json({
-                    error: "Session not available yet. Please wait 24 hours.",
-                    next_available_at: nextAvailableTime.toISOString(),
-                    hours_left: hoursLeft,
-                  });
-                }
-              }
+              //     return res.status(403).json({
+              //       error: "Session not available yet. Please wait 24 hours.",
+              //       next_available_at: nextAvailableTime.toISOString(),
+              //       hours_left: hoursLeft,
+              //     });
+              //   }
+              // }
 
               db.run(
                 "INSERT INTO session_logs (user_id, session_id) VALUES (?, ?)",
