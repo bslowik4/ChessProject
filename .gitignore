@@ -2,4 +2,7 @@
 node_modules
 *.zip
 *.db
-.env
+*.env
+*.md
+backend/.env
+/autoMail

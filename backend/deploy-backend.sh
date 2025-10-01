@@ -25,7 +25,10 @@ az webapp config appsettings set \
   WEBSITE_NODE_DEFAULT_VERSION=~18 \
   ALLOWED_ORIGINS=$FRONTEND_URL \
   JWT_SECRET="chess-trainer-jwt-secret-key" \
-  NODE_ENV="production"
+  NODE_ENV="production" \
+  API_KEY=chess_key_HK_BS.2025! \
+  OTHER_BACKEND_URL=https://chesshkbackend.azurewebsites.net/
+
 
 # Step 3: Prepare deployment package
 echo "Preparing deployment package..."

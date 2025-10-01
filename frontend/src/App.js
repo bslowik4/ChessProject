@@ -89,7 +89,7 @@ function App() {
     if (savedPuzzleIndex || savedPuzzlesCompleted) {
       setSessionProgress({
         puzzlesCompleted: savedPuzzlesCompleted ? Number(savedPuzzlesCompleted) : 0,
-        totalPuzzles: 0, 
+        totalPuzzles: 0,
         currentPuzzleIndex: savedPuzzleIndex ? Number(savedPuzzleIndex) : 0
       });
     }
@@ -313,37 +313,37 @@ function App() {
 
   const startSession = async () => {
     if (!userInfo.userId || !userInfo.currentSession) return;
-    
+
     if (userInfo.currentSession > MAX_SESSIONS) {
       console.log("All sessions completed, cannot start a new session");
       return;
     }
-  
+
     try {
       const sessionLog = await createSessionLog(userInfo.userId, userInfo.currentSession);
       setSessionLogId(sessionLog.session_log_id);
-  
+
       localStorage.setItem('session_log_id', sessionLog.session_log_id);
-  
+
       const startTime = Date.now();
       setSessionStartTime(startTime);
-  
+
       localStorage.setItem('session_start_time', startTime);
       localStorage.setItem('session_active', 'true');
-  
+
       setShowInstructions(false);
       setSessionActive(true);
     } catch (error) {
       console.error('Error creating session log:', error);
-      
+
       if (error.response && error.response.data && error.response.data.error) {
         alert(`Session error: ${error.response.data.error}`);
         return;
       }
-      
+
       setShowInstructions(false);
       setSessionActive(true);
-  
+
       localStorage.setItem('session_active', 'true');
       localStorage.setItem('session_start_time', Date.now());
     }
@@ -488,6 +488,7 @@ function App() {
       Math.ceil(24 - ((new Date() - lastSessionTime) / (1000 * 60 * 60))) : 0;
 
     const isLastSession = userInfo.currentSession === MAX_SESSIONS;
+    const shouldShowWaitMessage = userInfo.currentSession > 1 && lastSessionTime && !canStartNextSession();
 
     return (
       <div className={styles.appWrapper}>
@@ -504,57 +505,43 @@ function App() {
             <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>
           </div>
         </div>
+        
         <div className={styles.instructionsContainer}>
           <div className={styles.instructions}>
-            <h2>Instructions</h2>
-            <div className={`${styles.instructionsContent} dark-mode-card`}>
-              <ol>
-                <li><span>The training program consists of </span><strong><span>5 learning sessions</span></strong><span>, during which you will solve chess puzzles.&nbsp;</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><strong><span>A</span></strong><strong><span>fter completing each session, you must wait 24 hours before beginning the next one.</span></strong><span> Once it becomes </span><strong><span>available, you will have another 24 hours to complete it. </span></strong><span>You will receive a reminder via email when it is time for your next session.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>At the top of the page, there will be a countdown timer and the motive name of the current task.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>During each session, try to </span><strong><span>solve as many puzzles correctly as possible</span></strong><span>.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>Every exercise has </span><strong><span>only one correct solution</span></strong><span>.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>You have </span><strong><span>2 minutes to solve each puzzle</span></strong> <span>&ndash; in that time </span><strong><span>you will need to make </span></strong><strong><span>between one and three moves.</span></strong><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>You have only </span><strong><span>one attempt to solve the puzzle</span></strong><span>, so think carefully before making a move.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>If you make a </span><strong><span>mistake</span></strong><span>, you will </span><strong><span>receive feedback</span></strong> <span>with the correct solution</span><strong><span>. You can review it by clicking the arrows next to the chessboard</span></strong><span>. You will </span><strong><span>have 45 seconds</span></strong> <span>to study the correct moves &ndash; use this time to memorize the solution.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>Each learning session can last up to 60 minutes &ndash; </span><strong><span>there are no scheduled breaks during the session</span></strong><span>. Please complete the session at one time.&nbsp;</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>At the top of the page, you can see the number of your current session.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>For questions about the study, please contact the researchers at: </span><span><b><span>chesspoject.research@gmail.com</span></b> </span><span>&nbsp;</span></li>
-              </ol>
-              <p><strong><span>After completing 5 training sessions, you will be asked via email to participate in the final test.</span></strong><span>&nbsp;</span></p>
-              {isLastSession && (
-                <div className={styles.finalSessionNote}>
-                  <p><strong>Note:</strong> This is your final session in the study. Thank you for your participation!</p>
+            {!shouldShowWaitMessage && (
+              <>
+                <p><strong>Instructions</strong>&nbsp;</p>
+                <div className={`${styles.instructionsContent} dark-mode-card`}>
+                  <p><strong>Training Overview</strong>&nbsp;</p>
+                  <p>The training program consists of <strong>5 learning sessions</strong>, during which you will solve chess puzzles. <strong>After completing each session, you must wait 24 hours before beginning the next one.</strong> Once it becomes <strong>available, you will have another 24 hours to complete it. </strong>You will receive a reminder via email when you should do your next session.&nbsp;</p>
+                  <p>&nbsp;</p>
+                  <p><strong>Session Display and Duration</strong>&nbsp;</p>
+                  <p>At the top of the page, there will be a countdown timer and the motive name of the current task. Once you start a session, you&rsquo;ll see at the top of the page which session you&rsquo;re currently working on. Each learning session can last up to 60 minutes &ndash; <strong>there are no scheduled breaks during the session</strong>. Please complete the session at one time.&nbsp;</p>
+                  <p>&nbsp;</p>
+                  <p><strong>Solving Rules</strong>&nbsp;</p>
+                  <p>During each session, try to <strong>solve as many puzzles correctly as possible</strong>. Every exercise has <strong>only one correct solution</strong>. You have <strong>2 minutes to solve each puzzle</strong> &ndash; in that time <strong>you will need to make between one and three moves. </strong>You have only <strong>one attempt to solve the puzzle</strong>, so think carefully before making a move.&nbsp;</p>
+                  <p>&nbsp;</p>
+                  <p><strong>Feedback</strong>&nbsp;</p>
+                  <p>If you make a <strong>mistake</strong>, you will <strong>receive feedback</strong> with the correct solution. <strong>You can review it by clicking the arrows next to the chessboard</strong>. You will <strong>have 30 seconds</strong> to study the correct moves &ndash; use this time to memorize the solution.&nbsp;</p>
+                  <p>&nbsp;</p>
+                  <p><strong>Contact</strong>&nbsp;</p>
+                  <p>For questions about the study, please contact the researchers at: chessproject.research@gmail.com</p>
+
+                  {isLastSession && (
+                    <div className={styles.finalSessionNote}>
+                      <p><strong>Note:</strong> This is your final session in the study. Thank you for your participation!</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </>
+            )}
 
-            </div>
-
-            {userInfo.currentSession > 1 && lastSessionTime && !canStartNextSession() ? (
+            {shouldShowWaitMessage ? (
               <div className={styles.waitMessage}>
                 <h3>Please wait before starting the next session</h3>
-                <p>You need to wait at least 24 hourss between sessions.</p>
+                <p>You need to wait at least 24 hours between sessions.</p>
                 <p>Time remaining: approximately {waitTimeLeft} hour{waitTimeLeft !== 1 ? 's' : ''}</p>
+                <p>Thanks for completing todays session!</p>
               </div>
             ) : (
               <div className={styles.startPrompt}>

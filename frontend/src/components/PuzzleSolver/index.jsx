@@ -22,7 +22,7 @@ import {
 import { recordPuzzleResult, completeSessionLog } from '../../api/database';
 
 const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-const SOLUTION_DISPLAY_TIME = 5; // 64 seconds to view solution
+const SOLUTION_DISPLAY_TIME = 34; // 64 seconds to view solution
 
 function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, sessionId, sessionLogId, initialPuzzleIndex = 0 }) {
   // State declarations
@@ -274,6 +274,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
                 // Check if puzzle is solved after computer's move
                 if (newMoveIndex >= currentPuzzle.moves.length) {
+                  setTimeout(() => {
                   setIsSolved(true);
                   localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'solved');
                   setCompletedExercises(prev => prev + 1);
@@ -295,6 +296,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
                   // Update progress with new completion count
                   updateProgress(currentIndex);
+                }, 600);
                 }
               }
             } catch (error) {
@@ -302,6 +304,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
             }
           }, 300); // Small delay before computer move
         } else {
+          setTimeout(() => {
           // Puzzle is solved if no more computer moves
           setIsSolved(true);
           localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'solved');
@@ -326,11 +329,13 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
           // Update progress with new completion count
           updateProgress(currentIndex);
+        },600);
         }
       } else {
         // It's a legal move but not the correct solution
         setTotalIncorrectMoves(prev => prev + 1);
         triggerErrorAnimation();
+        setTimeout(() => {
         setIsFailed(true);
         localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'failed');
 
@@ -371,8 +376,9 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
         // Update progress
         updateProgress(currentIndex);
-
+        
         return false;
+        },600)
       }
 
       // Update the game state to reflect the move
@@ -779,6 +785,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
           <p>Thank you for completing this session.</p>
           <p>Your next session will be available after 24 hours.</p>
           <p>Correct puzzles: {completedExercises} / {exercises.length}</p>
+          <p>You can now close this window or navigate back to the main page.</p>
         </div>
       </div>
     );
@@ -851,15 +858,15 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         </div>
       </div>
 
-      <PuzzleStatus
-        handleNextPuzzle={handleNextPuzzle}
-        animateError={animateError}
-        isSolved={isSolved}
-        isFailed={isFailed}
-        showSolution={showSolution}
-        solutionTimer={solutionTimer}
-        currentPuzzle={currentPuzzle}
-      />
+        <PuzzleStatus
+          handleNextPuzzle={handleNextPuzzle}
+          animateError={animateError}
+          isSolved={isSolved}
+          isFailed={isFailed}
+          showSolution={showSolution}
+          solutionTimer={solutionTimer}
+          currentPuzzle={currentPuzzle}
+        />
 
       <PuzzleProgress
         totalExercises={exercises.length}

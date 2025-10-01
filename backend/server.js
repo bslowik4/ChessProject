@@ -11,6 +11,8 @@ const saltRounds = 10;
 const app = express();
 const PORT = process.env.PORT || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || "chess-trainer-jwt-secret-key"; // Use env variable in production
+const API_KEY = process.env.API_KEY
+const OTHER_BACKEND_URL = process.env.OTHER_BACKEND_URL || "http://localhost:5002"; // Configure as needed
 
 // Middleware
 app.use(
@@ -23,7 +25,6 @@ app.use(
 );
 app.use(bodyParser.json());
 
-// Database path - for production, use Azure storage mounted path if available
 const dbPath =
   process.env.DB_PATH || path.join(__dirname, "chess_exercises.db");
 const db = new sqlite3.Database(dbPath, (err) => {
@@ -34,6 +35,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
     initDb();
   }
 });
+
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
@@ -160,8 +162,35 @@ const initDb = () => {
           console.log("Puzzle move times table initialized");
         }
       }
-    );
-  };
+    );  };
+};
+
+// Function to send user data to other backend
+const sendUserToOtherBackend = async (userId, username, hashedPassword, groupId) => {
+  try {
+    const response = await fetch(`${OTHER_BACKEND_URL}/api/users/new_register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY
+      },
+      body: JSON.stringify({
+        username: username,
+        password: hashedPassword,
+        group_id: groupId
+      })
+    });
+
+    const data = await response.json();
+    
+    if (response.ok) {
+      console.log(`Successfully sent user ${username} (Group ${groupId}) to other backend:`, data.message);
+    } else {
+      console.error(`Failed to send user ${username} (Group ${groupId}) to other backend:`, data.error);
+    }
+  } catch (error) {
+    console.error(`Error sending user ${username} (Group ${groupId}) to other backend:`, error.message);
+  }
 };
 
 // API Routes
@@ -297,26 +326,24 @@ app.post("/api/users/login", (req, res) => {
 
             const now = new Date();
 
-            // Only check time restriction if the user has completed a session before
-            // if (lastSession && lastSession.next_available_at) {
-            //   const nextAvailable = new Date(lastSession.next_available_at);
+            if (lastSession && lastSession.next_available_at) {
+              const nextAvailable = new Date(lastSession.next_available_at);
 
-            //   if (now < nextAvailable) {
-            //     // Calculate hours left
-            //     const hoursLeft = Math.ceil(
-            //       (nextAvailable - now) / (1000 * 60 * 60)
-            //     );
+              if (now < nextAvailable) {
+                // Calculate hours left
+                const hoursLeft = Math.ceil(
+                  (nextAvailable - now) / (1000 * 60 * 60)
+                );
 
-            //     return res.status(403).json({
-            //       error:
-            //         "You cannot login yet. Please wait 24 hours between sessions.",
-            //       next_available_at: lastSession.next_available_at,
-            //       hours_left: hoursLeft,
-            //     });
-            //   }
-            // }
+                return res.status(403).json({
+                  error:
+                    "You cannot login yet. Please wait 24 hours between sessions.",
+                  next_available_at: lastSession.next_available_at,
+                  hours_left: hoursLeft,
+                });
+              }
+            }
 
-            // If we get here, the user can login
             // Generate token
             const token = jwt.sign(
               { id: user.id, username: user.username, group_id: user.group_id },
@@ -529,7 +556,6 @@ app.get(
           return res.status(404).json({ error: "No exercises found" });
         }
 
-        console.log(finalExercises)
         // Log exercise fetch
         console.log(
           `Fetched ${finalExercises.length} exercises for Group ${groupId}, Session ${sessionId}`
@@ -613,26 +639,26 @@ app.post("/api/sessions/start", authenticateToken, (req, res) => {
                   .json({ error: "Server error checking last session" });
               }
 
-              // const twentyFourHoursInMillis = 10;
-              // const now = new Date();
+              const twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
+              const now = new Date();
 
-              // if (lastSession && lastSession.end_time) {
-              //   const lastSessionEndTime = new Date(lastSession.end_time);
-              //   const nextAvailableTime = new Date(
-              //     lastSessionEndTime.getTime() + 10
-              //   );
+              if (lastSession && lastSession.end_time) {
+                const lastSessionEndTime = new Date(lastSession.end_time);
+                const nextAvailableTime = new Date(
+                  lastSessionEndTime.getTime() + twentyFourHoursInMillis
+                );
 
-              //   if (now < nextAvailableTime) {
-              //     const timeLeft = nextAvailableTime - now;
-              //     const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
+                if (now < nextAvailableTime) {
+                  const timeLeft = nextAvailableTime - now;
+                  const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
 
-              //     return res.status(403).json({
-              //       error: "Session not available yet. Please wait 24 hours.",
-              //       next_available_at: nextAvailableTime.toISOString(),
-              //       hours_left: hoursLeft,
-              //     });
-              //   }
-              // }
+                  return res.status(403).json({
+                    error: "Session not available yet. Please wait 24 hours.",
+                    next_available_at: nextAvailableTime.toISOString(),
+                    hours_left: hoursLeft,
+                  });
+                }
+              }
 
               db.run(
                 "INSERT INTO session_logs (user_id, session_id) VALUES (?, ?)",
@@ -731,9 +757,7 @@ app.post(
 
             console.log(
               `User ${userId} completed session ${sessionLog.session_id}, log ID: ${sessionLogId}`
-            );
-
-            // If completing session 5, update user's current_session to 6 to indicate all sessions are completed
+            );            // If completing session 5, update user's current_session to 6 to indicate all sessions are completed
             if (isFinishingFinalSession) {
               db.run(
                 "UPDATE users SET current_session = 6 WHERE id = ?",
@@ -748,6 +772,19 @@ app.post(
                   } else {
                     console.log(
                       `User ${userId} has completed all sessions, updated to session 6 (completed state)`
+                    );
+                    
+                    // Send user data to other backend after completing session 5
+                    db.get(
+                      "SELECT username, password, group_id FROM users WHERE id = ?",
+                      [userId],
+                      (err, user) => {
+                        if (err) {
+                          console.error("Error fetching user for other backend:", err.message);
+                        } else if (user) {
+                          sendUserToOtherBackend(userId, user.username, user.password, user.group_id);
+                        }
+                      }
                     );
                   }
                 }
@@ -989,6 +1026,8 @@ app.get("/api/puzzles/move-times/:resultId", authenticateToken, (req, res) => {
     }
   );
 });
+
+
 
 // Start server
 app.listen(PORT, () => {

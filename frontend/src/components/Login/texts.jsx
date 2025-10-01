@@ -4,7 +4,7 @@ export const AgreementText = () => {
             <p>
                 1. I confirm that I have read and understand the information sheet for the above study. I have had the opportunity to consider the information, ask questions and have had these answered satisfactorily. <br />
                 2. I understand that my participation is voluntary and that I am free to withdraw at any time without giving any reason, without my medical, social care, education, or legal rights being affected. <br />
-                3. I understand that my data collected during the study, may be looked at by the researchers and her supervisor (Dr Aleksandra Krogulska). I give permission for these individuals to have access to my data. <br />
+                3. I understand that my data collected during the study, may be looked at by the researchers and their supervisor (Dr. Aleksandra Krogulska). I give permission for these individuals to have access to my data. <br />
                 4. I understand that my data may be used in future research. <br />
                 5. I agree to take part in the above study. <br />
             </p>
@@ -17,7 +17,7 @@ export const InformationText = () => {
         <>
             <h3>Information about the research</h3>
 
-            <p>You are invited to take part in a research study which aims to investigate different strategies for learning chess/solving chess-related tasks. We are conducting this research as the Students&rsquo; Union PRAGMA project. This study has been reviewed and approved by the Ethics Committee of the Department of Management and Social Communication at Jagiellonian University. Please take the time to read the following instructions carefully. If anything is unclear or you would like more information, contact the researchers.</p>
+            <p>You are invited to take part in a research study which aims to investigate different strategies for learning chess. We are conducting this research as the Students&rsquo; Union PRAGMA project. This study has been reviewed and approved by the Ethics Committee of The Faculty of Management and Social Communication at Jagiellonian University. Please take the time to read the following instructions carefully. If anything is unclear or you would like more information, contact the researchers (chessproject.research@gmail.com).</p>
 
             <h4>What will happen?</h4>
 
@@ -33,7 +33,7 @@ export const InformationText = () => {
 
             <p>If you wish to withdraw from the study during the experiment, please notify the experimenters via the email address provided at the end of this message within one week of your participation, quoting your e-mail address to request the withdrawal of your data. After the final test, data may be withdrawn from the study up until the point that the data collection period has completed and the data have been anonymised and collated. After this date it will no longer be possible to remove your data but nor will it be possible to identify it or link it to you.</p>
 
-            <p>E-mail address: chesspoject.research@gmail.com</p>
+            <p>E-mail address: chessproject.research@gmail.com</p>
 
             <h4>Benefits and risks</h4>
 
@@ -57,13 +57,13 @@ export const InformationText = () => {
 
             <h4>Who should I contact if I want further information?</h4>
 
-            <p>For questions about the study, please contact the researchers at: chesspoject.research@gmail.com</p>
+            <p>For questions about the study, please contact the researchers at: chessproject.research@gmail.com</p>
 
             <h4>Who should I contact if I wish to make a complaint?</h4>
 
-            <p>For complaints, contact the supervisor - Dr. Aleksandra Krogulska&#8239;: aleksandra.krogulska@amu.edu.pl</p>
+            <p>The supervisor of this research projekct: For complaints, contact the supervisor - Dr. Aleksandra Krogulska&#8239;: aleksandra.krogulska@amu.edu.pl</p>
 
-            <p>Klaudia Szymska, Dominik Krych, Ma&#322;gorzata Bubula, Mateusz Ko&#347;ka, Bart&#322;omiej S&#322;owik, Hubert Krejpcio, Tomasz Koczar&#8239;, Aleksandra Krogulska&#8239;</p>
+            <p>Researchers: Klaudia Szymska, Dominik Krych, Ma&#322;gorzata Bubula, Mateusz Ko&#347;ka, Bart&#322;omiej S&#322;owik, Hubert Krejpcio, Tomasz Koczar&#8239;, Aleksandra Krogulska&#8239;</p>
         </>
     )
 }

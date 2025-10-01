@@ -15,18 +15,18 @@ const StudyCompleted = ({ username, onLogout }) => {
         <h1>Study Completed!</h1>
 
         <p className={styles.thankYou}>
-          Thank you, <span className={styles.username}>{username}</span>, for participating in our chess puzzle study!
+          Thank you, <span className={styles.username}>{username}</span>, for participating in our chess training study!
         </p>
 
         <div className={styles.messageSection}>
-          <p>You have successfully completed all 5 sessions of the study.</p>
-          <p>Your contributions will help us better understand the effects of different training methods on chess puzzle-solving abilities.</p>
-          <p>The research team appreciates your time and dedication!</p>
+          <p>You have successfully completed all 5 sessions.</p>
+          <p>Your contributions will help us better understand the effects of different training methods on learning chess tactics.</p>
+          <p>Our research team appreciate your time and dedication!</p>
         </div>
 
         <div className={styles.contactSection}>
           <h2>Questions or Feedback?</h2>
-          <p>If you have any questions about the study or would like to receive information about the results when available, please contact the research team.</p>
+          <p>If you have any questions about the results of our study or would like to receive information about the results when available, please contact us: chessproject.research@gmail.com.</p>
         </div>
 
         <button
