@@ -1072,6 +1072,41 @@ app.post("/api/download-db", downloadDbLimiter, (req, res) => {
   });
 });
 
+app.get("/api/download-db", downloadDbLimiter, (req, res) => {
+  // Use environment variable for password (safer)
+  const PASSWORD = (typeof process !== "undefined" && process.env && process.env.DB_DOWNLOAD_PASSWORD)
+    ? process.env.DB_DOWNLOAD_PASSWORD
+    : "v@leV&ey0oZDxGZw*BOvGAKTK";
+  const providedPassword = req.query.password; // Use POST body instead of query param
+  const clientIP = req.ip || req.connection.remoteAddress;
+  
+  // Log all attempts (both successful and failed)
+  console.log(`Database download attempt from IP: ${clientIP} at ${new Date().toISOString()}`);
+
+  if (!providedPassword) {
+    console.log(`Failed download attempt from ${clientIP}: No password provided`);
+    return res.status(400).json({ error: "Password required" });
+  }
+
+  if (providedPassword !== PASSWORD) {
+    console.log(`Failed download attempt from ${clientIP}: Invalid password`);
+    return res.status(403).json({ error: "Forbidden: Invalid password" });
+  }
+
+  const dbFilePath = path.join(__dirname, "chess_exercises.db");
+  
+  // Log successful access
+  console.log(`Successful database download from IP: ${clientIP} at ${new Date().toISOString()}`);
+  
+  res.download(dbFilePath, "chess_exercises.db", (err) => {
+    if (err) {
+      console.error(`Error sending database file to ${clientIP}:`, err.message);
+      return res.status(500).json({ error: "Server error sending database file" });
+    }
+    console.log(`Database file successfully sent to ${clientIP}`);
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
