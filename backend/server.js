@@ -6,20 +6,21 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
+const rateLimit = require('express-rate-limit'); // Add rate limiter
 
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 5001;
-const JWT_SECRET = process.env.JWT_SECRET || "chess-trainer-jwt-secret-key"; // Use env variable in production
+const JWT_SECRET = process.env.JWT_SECRET || "chess-trainer-jwt-secret-keyfsafgas@3fvszvsze!@#124"; // Use env variable in production
 const API_KEY = process.env.API_KEY
-const OTHER_BACKEND_URL = process.env.OTHER_BACKEND_URL || "http://localhost:5002"; // Configure as needed
+const OTHER_BACKEND_URL = process.env.OTHER_BACKEND_URL || "https://chesshkbackend.azurewebsites.net/"; // Configure as needed
 
 // Middleware
 app.use(
   cors({
     origin:
       process.env.NODE_ENV === "production"
-        ? process.env.ALLOWED_ORIGINS || "*"
+        ? "*"
         : "*",
   })
 );
@@ -36,6 +37,14 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
+// Rate limiter for database download
+const downloadDbLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: { error: "Too many download attempts, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
@@ -338,7 +347,7 @@ app.post("/api/users/login", (req, res) => {
                 return res.status(403).json({
                   error:
                     "You cannot login yet. Please wait 24 hours between sessions.",
-                  next_available_at: lastSession.next_available_at,
+                  next_available_at: lastAvailable.next_available_at,
                   hours_left: hoursLeft,
                 });
               }
@@ -1027,7 +1036,41 @@ app.get("/api/puzzles/move-times/:resultId", authenticateToken, (req, res) => {
   );
 });
 
+// Simple authorized endpoint to download chess_exercises.db
+app.post("/api/download-db", downloadDbLimiter, (req, res) => {
+  // Use environment variable for password (safer)
+  const PASSWORD = (typeof process !== "undefined" && process.env && process.env.DB_DOWNLOAD_PASSWORD)
+    ? process.env.DB_DOWNLOAD_PASSWORD
+    : "v@leV&ey0oZDxGZw*BOvGAKTK";
+  const providedPassword = req.body.password; // Use POST body instead of query param
+  const clientIP = req.ip || req.connection.remoteAddress;
 
+  // Log all attempts (both successful and failed)
+  console.log(`Database download attempt from IP: ${clientIP} at ${new Date().toISOString()}`);
+
+  if (!providedPassword) {
+    console.log(`Failed download attempt from ${clientIP}: No password provided`);
+    return res.status(400).json({ error: "Password required" });
+  }
+
+  if (providedPassword !== PASSWORD) {
+    console.log(`Failed download attempt from ${clientIP}: Invalid password`);
+    return res.status(403).json({ error: "Forbidden: Invalid password" });
+  }
+
+  const dbFilePath = path.join(__dirname, "chess_exercises.db");
+  
+  // Log successful access
+  console.log(`Successful database download from IP: ${clientIP} at ${new Date().toISOString()}`);
+  
+  res.download(dbFilePath, "chess_exercises.db", (err) => {
+    if (err) {
+      console.error(`Error sending database file to ${clientIP}:`, err.message);
+      return res.status(500).json({ error: "Server error sending database file" });
+    }
+    console.log(`Database file successfully sent to ${clientIP}`);
+  });
+});
 
 // Start server
 app.listen(PORT, () => {

@@ -6,6 +6,7 @@ RESOURCE_GROUP="PodstawowySzachy"
 APP_SERVICE_PLAN="ASP-PodstawowySzachy-96f5"
 BACKEND_APP="chessBSBackend"
 FRONTEND_URL="https://chessbsfrontend.azurewebsites.net"
+DB_DOWNLOAD_PASSWORD=%TLSlx@NdbWiOm*e92NSAQJYG
 
 # Step 1: Create or update the backend app service
 echo "Creating/updating backend app service..."
